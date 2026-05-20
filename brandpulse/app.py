@@ -11,6 +11,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from dash import Input, Output, State, dcc, html
 from dash.exceptions import PreventUpdate
+from flask_cors import CORS
 from pyspark.sql import SparkSession
 
 import feedback_logger
@@ -480,8 +481,8 @@ app.layout = html.Div(
                 # WHY: dcc.Interval enables auto-refresh without WebSockets —
                 # Databricks Apps doesn't expose raw socket connections, so polling
                 # Delta every 30s is the correct pattern for near-real-time updates.
-                dcc.Interval(id="interval-cards",  interval=30_000,  n_intervals=0),
-                dcc.Interval(id="interval-chart",  interval=60_000,  n_intervals=0),
+                dcc.Interval(id="interval-cards",   interval=30_000,  n_intervals=0),
+                dcc.Interval(id="interval-chart",   interval=60_000,  n_intervals=0),
 
                 # Global store for live suggestions data
                 dcc.Store(id="store-suggestions", data=_suggestions),
@@ -539,17 +540,12 @@ app.layout = html.Div(
 
             ],
         ),
-
-        # Inline CSS for the pulsing dot
-        html.Style("""
-            @keyframes pulse {
-                0%   { opacity: 1; }
-                50%  { opacity: 0.3; }
-                100% { opacity: 1; }
-            }
-        """),
     ],
 )
+
+# Export underlying Flask server instance cleanly for handling API requests
+server = app.server
+CORS(server, resources={r"/api/*": {"origins": "*"}})
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -557,7 +553,7 @@ app.layout = html.Div(
 # ══════════════════════════════════════════════════════════════════════════════
 
 # ── Auto-refresh suggestion cards every 30s ───────────────────────────────────
-@app.callback(
+@dash.callback(
     Output("suggestion-cards", "children"),
     Output("store-suggestions", "data"),
     Output("metric-cards",      "children"),
@@ -580,7 +576,7 @@ def refresh_cards(n):
 
 
 # ── Auto-refresh feedback chart every 60s ─────────────────────────────────────
-@app.callback(
+@dash.callback(
     Output("feedback-chart", "figure"),
     Input("interval-chart",  "n_intervals"),
     prevent_initial_call=True,
@@ -590,7 +586,7 @@ def refresh_chart(n):
 
 
 # ── Toggle image prompt visibility ────────────────────────────────────────────
-@app.callback(
+@dash.callback(
     Output({"type": "prompt-text", "index": dash.MATCH}, "style"),
     Input({"type": "btn-prompt",   "index": dash.MATCH}, "n_clicks"),
     State({"type": "prompt-text",  "index": dash.MATCH}, "style"),
@@ -604,7 +600,7 @@ def toggle_prompt(n_clicks, current_style):
 
 
 # ── Toggle Tweak panel ────────────────────────────────────────────────────────
-@app.callback(
+@dash.callback(
     Output({"type": "tweak-panel",  "index": dash.MATCH}, "style"),
     Output({"type": "reject-panel", "index": dash.MATCH}, "style"),
     Input({"type": "btn-tweak",     "index": dash.MATCH}, "n_clicks"),
@@ -623,7 +619,7 @@ def toggle_tweak(n_clicks, tweak_style, reject_style):
 
 
 # ── Toggle Reject panel ───────────────────────────────────────────────────────
-@app.callback(
+@dash.callback(
     Output({"type": "reject-panel", "index": dash.MATCH}, "style", allow_duplicate=True),
     Output({"type": "tweak-panel",  "index": dash.MATCH}, "style", allow_duplicate=True),
     Input({"type": "btn-reject",    "index": dash.MATCH}, "n_clicks"),
@@ -642,7 +638,7 @@ def toggle_reject(n_clicks, reject_style, tweak_style):
 
 
 # ── Approve + Generate Video ──────────────────────────────────────────────────
-@app.callback(
+@dash.callback(
     Output({"type": "feedback-msg", "index": dash.MATCH}, "children"),
     Input({"type": "btn-approve",   "index": dash.MATCH}, "n_clicks"),
     State({"type": "store-sid",     "index": dash.MATCH}, "data"),
@@ -668,7 +664,7 @@ def on_approve(n_clicks, suggestion_id):
 
 
 # ── Confirm Reject ────────────────────────────────────────────────────────────
-@app.callback(
+@dash.callback(
     Output({"type": "feedback-msg",      "index": dash.MATCH}, "children",
            allow_duplicate=True),
     Input({"type": "btn-confirm-reject", "index": dash.MATCH}, "n_clicks"),
@@ -692,7 +688,7 @@ def on_reject(n_clicks, suggestion_id, reason):
 
 
 # ── Regenerate with custom caption seed ──────────────────────────────────────
-@app.callback(
+@dash.callback(
     Output({"type": "feedback-msg",   "index": dash.MATCH}, "children",
            allow_duplicate=True),
     Input({"type": "btn-regenerate",  "index": dash.MATCH}, "n_clicks"),
@@ -714,11 +710,62 @@ def on_regenerate(n_clicks, caption_seed):
         return html.Div(f"⚠ Error: {str(e)[:80]}", style={"color": "#D45A3A", "fontSize": "12px"})
 
 
+# ── Custom Frontend API Bridge 1: /api/brand ──────────────────────────────────
+@server.route('/api/brand', methods=['GET', 'POST', 'OPTIONS'])
+def handle_brand_setup():
+    from flask import jsonify, request
+    if request.method == 'OPTIONS':
+        return jsonify({"success": True}), 200
+    try:
+        data = request.get_json() or {}
+        print(f"[API] Received brand generation request for: {data.get('brandName', 'pine')}")
+        return jsonify({
+            "success": True,
+            "message": "Trends analyzed successfully!",
+            "suggestions": MOCK_SUGGESTIONS,
+            "gap": MOCK_GAP
+        }), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ── Custom Frontend API Bridge 2: /api/trends ─────────────────────────────────
+@server.route('/api/trends', methods=['GET', 'POST', 'OPTIONS'])
+def handle_trends_setup():
+    from flask import jsonify, request
+    if request.method == 'OPTIONS':
+        return jsonify({"success": True}), 200
+    try:
+        print("[API] Feeding mock trends packet back to React app.")
+        return jsonify({
+            "success": True,
+            "suggestions": MOCK_SUGGESTIONS,
+            "gap": MOCK_GAP
+        }), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ── Custom Frontend API Bridge 3: /api/generate ───────────────────────────────
+@server.route('/api/generate', methods=['GET', 'POST', 'OPTIONS'])
+def handle_generation_setup():
+    from flask import jsonify, request
+    if request.method == 'OPTIONS':
+        return jsonify({"success": True}), 200
+    try:
+        print("[API] Feeding finalized reel concepts packet back to React app.")
+        return jsonify({
+            "success": True,
+            "suggestions": MOCK_SUGGESTIONS,
+            "gap": MOCK_GAP
+        }), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # Entry point
 # ══════════════════════════════════════════════════════════════════════════════
 if __name__ == "__main__":
-    # WHY: host="0.0.0.0" is required for Databricks Apps to route external
-    # traffic to the Dash server; debug=False prevents the hot-reloader from
-    # spawning a second Spark session and doubling memory usage.
-    app.run(host="0.0.0.0", port=8050, debug=False)
+    # Fire up the native server instance directly on port 8000
+    server.run(host="127.0.0.1", port=8000, debug=False)
