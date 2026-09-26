@@ -109,30 +109,297 @@ def _fetch_apify(hashtags: list[str]) -> list[dict]:
         print(f"[Apify] failed: {e}")
         return []
 
-def _mock_trends(hashtags: list[str]) -> list[dict]:
+INDUSTRY_DATA = {
+    "Beauty & Skincare": {
+        "captions": [
+            "Your skin deserves only the best 🌿 Natural ingredients that actually work. No compromises.",
+            "Glass skin is achievable. Our Vitamin C range makes it real ✨ Shop now.",
+            "Ayurvedic wisdom meets modern science. Feel the difference 🌸 Toxin-free formula.",
+            "We said NO to parabens before it was cool 💪 Clean beauty that delivers results.",
+            "Real ingredients. Real results. Zero toxins 🌱 Your skin will thank you.",
+            "Glow from within ☀️ Our new serum is packed with Niacinamide for that glass skin moment.",
+        ],
+        "usernames": ["glowwithme.in", "skincarebypriya", "beautyobsessed.ig", "cleanbeautychapter", "radiantindian"],
+        "ideas": lambda brand, hashtags: [
+            {
+                "caption": f"Your skin is the planet's skin too 🌿 {brand.name}'s clean range — no toxins, no compromises.",
+                "hashtags": hashtags[:2] + ["#NaturalGlow"],
+                "image_prompt": f"Young Indian woman, radiant glowing skin, rooftop garden, golden hour, holding a minimalist serum bottle, 9:16 vertical frame, editorial beauty campaign, earthy tones — terracotta sage ivory.",
+                "viral_score": 94,
+                "rationale": "Sustainability + authenticity is the dominant value signal right now.",
+            },
+            {
+                "caption": f"Glow is not a filter. It's a ritual 🌸 {brand.name} — science meets nature in every drop.",
+                "hashtags": hashtags[:2] + ["#GlassSkin"],
+                "image_prompt": f"Close-up of glowing Indian skin, single drop of amber serum falling from dropper, marble surface, saffron strands, warm candlelight, macro lens, 9:16 vertical, luxury editorial.",
+                "viral_score": 87,
+                "rationale": "Ritual-based skincare content consistently outperforms product-push posts by 3x.",
+            },
+            {
+                "caption": f"Real ingredients. Real results 💪 {brand.name} Clean — because your skin deserves honesty.",
+                "hashtags": hashtags[:2] + ["#SkincareRoutine"],
+                "image_prompt": f"Overhead flat lay of {brand.name} products on white marble, eucalyptus leaves, white flowers, bright natural daylight, geometric arrangement, top-down shot, 9:16 vertical, studio photography.",
+                "viral_score": 79,
+                "rationale": "Ingredient transparency builds long-term brand trust and repeat purchaser loyalty.",
+            },
+        ]
+    },
+    "Fashion & Apparel": {
+        "captions": [
+            "Elevate your daily OOTD 👗 Sustainable fabrics meet street style aesthetics.",
+            "Minimalist wardrobe staples that turn heads ✨ Wear your confidence.",
+            "From runway inspiration to everyday drip 🔥 New collection drop live now.",
+            "Crafted with eco-certified cotton. Comfort meets high fashion 🌿",
+            "Step up your style game 👟 Handcrafted luxury tailored for your aesthetic.",
+        ],
+        "usernames": ["stylefile.in", "streetwearhub", "fashionforward", "ootd_diaries", "sustainablefit"],
+        "ideas": lambda brand, hashtags: [
+            {
+                "caption": f"Streetwear meets sustainability 🧵 {brand.name}'s eco-cotton edit is here.",
+                "hashtags": hashtags[:2] + ["#StreetwearStyle"],
+                "image_prompt": f"Fashion model walking down a sunlit urban street, wearing oversized minimalist streetwear by {brand.name}, slow-motion stride, cinematic lighting, 9:16 vertical, high-fashion aesthetic.",
+                "viral_score": 95,
+                "rationale": "Eco-streetwear aesthetic is trending heavily with high engagement across Gen-Z.",
+            },
+            {
+                "caption": f"Capsule wardrobe perfection 👗 5 pieces, 15 outfits with {brand.name}.",
+                "hashtags": hashtags[:2] + ["#CapsuleWardrobe"],
+                "image_prompt": f"Model seamlessly styling neutral clothing items against a concrete textured backdrop, soft studio lighting, smooth camera pan, 9:16 vertical, editorial lookbook.",
+                "viral_score": 88,
+                "rationale": "Versatile styling guides drive 4x higher save rates on Instagram Reels.",
+            },
+            {
+                "caption": f"Bold statements only 🔥 Redefine your personal style with {brand.name}.",
+                "hashtags": hashtags[:2] + ["#OOTDInspiration"],
+                "image_prompt": f"Close-up shot of hand-stitched denim detail and luxury accessory by {brand.name}, vibrant urban neon rim light, moody contrast, 9:16 vertical, dynamic camera zoom.",
+                "viral_score": 82,
+                "rationale": "High-contrast macro detail shots build premium brand perception.",
+            },
+        ]
+    },
+    "Food & Beverage": {
+        "captions": [
+            "Start your morning with artisanal perfection ☕ Single-origin notes in every sip.",
+            "Savor the flavor 🍕 Fresh organic ingredients packed into every bite.",
+            "Plant-based indulgence that actually tastes heavenly 🌱 Order online.",
+            "Fuel your hustle with raw cold-pressed juice 🍊 100% natural, 0 added sugar.",
+            "Crafted for foodies, brewed with passion 🍵 Experience taste elevated.",
+        ],
+        "usernames": ["foodie_finds", "artisanalbrews", "gourmet_journal", "plantbasedeats", "taste_tracker"],
+        "ideas": lambda brand, hashtags: [
+            {
+                "caption": f"Brewed for the movers & shakers ☕ Taste the {brand.name} artisanal difference.",
+                "hashtags": hashtags[:2] + ["#ArtisanalCoffee"],
+                "image_prompt": f"Barista pouring velvety steamed milk into dark espresso creating latte art for {brand.name}, warm ambient coffee shop lighting, macro lens, steam rising, 9:16 vertical reel.",
+                "viral_score": 93,
+                "rationale": "Sensory beverage pouring reels have one of the highest completion rates.",
+            },
+            {
+                "caption": f"Clean ingredients, bold flavor 🥗 Fuel your day with {brand.name}.",
+                "hashtags": hashtags[:2] + ["#GourmetEats"],
+                "image_prompt": f"Vibrant fresh organic bowl by {brand.name} being assembled in slow-motion, colorful ingredients dropping, bright natural daylight, 9:16 vertical, appetizing gourmet camera shot.",
+                "viral_score": 89,
+                "rationale": "Action-based food prep footage generates strong intent and local discovery.",
+            },
+            {
+                "caption": f"Sip into serenity 🍹 Refreshing, natural, zero added sugar by {brand.name}.",
+                "hashtags": hashtags[:2] + ["#CleanSnacking"],
+                "image_prompt": f"Iced sparkling botanical drink with mint garnish on marble surface, condensation dripping off glass, summer sun flare, 9:16 vertical, cinematic slow-mo.",
+                "viral_score": 81,
+                "rationale": "Zero-sugar health positioning captures wellness-conscious foodies.",
+            },
+        ]
+    },
+    "Fitness & Wellness": {
+        "captions": [
+            "Crush your personal record today 💪 High-intensity workouts built for results.",
+            "Fuel your transformation 🔥 Clean plant protein that tastes amazing.",
+            "Find your inner peace and core strength 🧘‍♀️ Daily mindfulness and movement.",
+            "Performance activewear engineered for maximum mobility 🏋️‍♂️ Feel the power.",
+            "Hydrate, restore, conquer 💦 Science-backed recovery for peak performance.",
+        ],
+        "usernames": ["fitlife_daily", "iron_mindset", "wellness_guru", "activepulse", "shredded_journal"],
+        "ideas": lambda brand, hashtags: [
+            {
+                "caption": f"Break boundaries, set new standards 💪 {brand.name} performance gear.",
+                "hashtags": hashtags[:2] + ["#WorkoutMotivation"],
+                "image_prompt": f"Athlete tying {brand.name} performance shoe and sprinting out of starting blocks, dramatic high-contrast gym lighting, sweat glistening, 9:16 vertical, high-energy cinematic workout reel.",
+                "viral_score": 96,
+                "rationale": "High-intensity athletic motivation drives massive engagement and shares.",
+            },
+            {
+                "caption": f"Mindful movement for a strong core 🧘‍♀️ Find your balance with {brand.name}.",
+                "hashtags": hashtags[:2] + ["#MindfulMovement"],
+                "image_prompt": f"Woman performing a fluid yoga transition on a sunlit wooden deck overlooking nature, serene atmosphere, soft morning sunbeams, 9:16 vertical, peaceful aesthetic.",
+                "viral_score": 87,
+                "rationale": "Mindfulness reels trigger emotional resonance and high bookmarking rates.",
+            },
+            {
+                "caption": f"Clean fuel for maximum recovery ⚡ {brand.name} nutrition.",
+                "hashtags": hashtags[:2] + ["#CleanNutrition"],
+                "image_prompt": f"Nutritional smoothie bowl being sprinkled with chia seeds and berries, crisp kitchen counter setting, energetic camera movement, 9:16 vertical.",
+                "viral_score": 80,
+                "rationale": "Post-workout nutrition recipes appeal directly to active lifestyle consumers.",
+            },
+        ]
+    },
+    "Tech & Gadgets": {
+        "captions": [
+            "Unboxing the future of smart audio 🎧 Active noise cancellation at its finest.",
+            "Level up your desk setup 💻 Ergonomic design meets sleek minimalism.",
+            "Next-gen battery life for non-stop productivity 🔋 Built for creators.",
+            "Control your environment with one touch 🤖 The ultimate smart home ecosystem.",
+            "Lightweight. Ultra-fast. Unstoppable ⚡ High-performance tech reimagined.",
+        ],
+        "usernames": ["tech_radar", "desk_setup_goals", "gadget_geek", "future_tech_in", "digital_nomad_gear"],
+        "ideas": lambda brand, hashtags: [
+            {
+                "caption": f"Silence the noise, unleash your focus 🎧 {brand.name} audio excellence.",
+                "hashtags": hashtags[:2] + ["#TechSetup"],
+                "image_prompt": f"Cinematic close-up of sleek matte-black wireless headphones by {brand.name} being placed on, LED glow accents, dark minimalist setup, 9:16 vertical, tech commercial look.",
+                "viral_score": 94,
+                "rationale": "Sleek hardware lighting and ASMR product reveals excel in tech trends.",
+            },
+            {
+                "caption": f"The ultimate workspace aesthetic 💻 Work smarter with {brand.name}.",
+                "hashtags": hashtags[:2] + ["#DeskSetup"],
+                "image_prompt": f"Clean minimalist desk setup with ambient warm light bar, mechanical keyboard typing, smooth camera slide across {brand.name} workspace accessories, 9:16 vertical reel.",
+                "viral_score": 90,
+                "rationale": "Desk setup inspiration reels have high viral reach among professionals and students.",
+            },
+            {
+                "caption": f"Future tech in your palm ⚡ Unmatched power by {brand.name}.",
+                "hashtags": hashtags[:2] + ["#GadgetUnboxing"],
+                "image_prompt": f"Futuristic slim gadget by {brand.name} rotating in mid-air with subtle holographic reflections, studio black background, 9:16 vertical.",
+                "viral_score": 83,
+                "rationale": "Holographic/studio lighting aesthetics convey innovation and cutting-edge engineering.",
+            },
+        ]
+    },
+    "Home & Lifestyle": {
+        "captions": [
+            "Transform your living space into a serene sanctuary 🌿 Aesthetic decor essentials.",
+            "Minimalist design, maximum cozy vibes 🛋️ Crafted for modern living.",
+            "Plant parenthood made simple 🌱 Bring nature inside with self-watering planters.",
+            "Sustainable bamboo kitchenware for eco-conscious homes ☕ Upgrade your space.",
+            "Organized clutter-free bliss 📦 Smart storage solutions that look stunning.",
+        ],
+        "usernames": ["cozy_corner_in", "minimalist_home", "decor_inspiration", "nesting_vibes", "plant_parent_life"],
+        "ideas": lambda brand, hashtags: [
+            {
+                "caption": f"Turn your home into a sanctuary 🌿 {brand.name} interior accents.",
+                "hashtags": hashtags[:2] + ["#HomeDecor"],
+                "image_prompt": f"Sun-drenched living room with lush green indoor plants, warm beige linen sofa with {brand.name} cushions, gentle breeze moving curtains, 9:16 vertical, architectural digest feel.",
+                "viral_score": 92,
+                "rationale": "Sanctuary-focused interior transformations consistently top home & lifestyle trends.",
+            },
+            {
+                "caption": f"Minimalism that feels like warmth 🛋️ Crafted by {brand.name}.",
+                "hashtags": hashtags[:2] + ["#CozyVibes"],
+                "image_prompt": f"Hand pouring tea into a ceramic cup on a natural oak table from {brand.name}, cozy knit throw blanket in background, soft evening light, 9:16 vertical.",
+                "viral_score": 86,
+                "rationale": "Cozy aesthetic visuals drive high moodboard bookmarking.",
+            },
+            {
+                "caption": f"Organized living made beautiful ✨ {brand.name} lifestyle.",
+                "hashtags": hashtags[:2] + ["#OrganizationHacks"],
+                "image_prompt": f"Satisfying organization of a wooden shelf pantry with {brand.name} containers, sleek glass jars being arranged, high-definition aesthetic, 9:16 vertical.",
+                "viral_score": 84,
+                "rationale": "Restock and organization satisfying reels attract high replay loops.",
+            },
+        ]
+    },
+    "Travel & Hospitality": {
+        "captions": [
+            "Escape to paradise 🏝️ Uncover hidden coastal gems off the beaten path.",
+            "Luxury boutique living in the heart of the mountains ⛰️ Book your weekend getaway.",
+            "Wanderlust calling ✈️ Pack light, travel far, and capture every memory.",
+            "Authentic local flavors and unforgettable sunset views 🌅 Pure bliss.",
+            "Experience hospitality redefined 🥂 Unmatched comfort meets local heritage.",
+        ],
+        "usernames": ["wanderlust_diaries", "hidden_escapes", "luxury_traveler", "roam_free_in", "passport_stories"],
+        "ideas": lambda brand, hashtags: [
+            {
+                "caption": f"Uncover hidden paradises ✈️ Let {brand.name} take you there.",
+                "hashtags": hashtags[:2] + ["#Wanderlust"],
+                "image_prompt": f"Breathtaking drone view flying over turquoise ocean waters towards a tropical cliffside villa hosted by {brand.name}, golden hour sunlight, 9:16 vertical travel reel.",
+                "viral_score": 97,
+                "rationale": "Aerial landscape perspectives trigger immediate travel wanderlust and sharing.",
+            },
+            {
+                "caption": f"Wanderlust in every step 🌄 Escape the ordinary with {brand.name}.",
+                "hashtags": hashtags[:2] + ["#HiddenGems"],
+                "image_prompt": f"Traveler standing at a mountain summit viewpoint with mist floating below, sunrise casting a warm orange glow, cinematic 9:16 vertical.",
+                "viral_score": 89,
+                "rationale": "Hidden gem discovery reels generate massive comments asking for coordinates.",
+            },
+            {
+                "caption": f"Boutique luxury redefined 🥂 Experience {brand.name}.",
+                "hashtags": hashtags[:2] + ["#LuxuryTravel"],
+                "image_prompt": f"Private infinity pool overlooking a starry night skyline with soft lantern glow, champagne glass in hand, 9:16 vertical reel.",
+                "viral_score": 85,
+                "rationale": "Luxury hospitality visual storytelling attracts high-intent travel buyers.",
+            },
+        ]
+    },
+    "Education": {
+        "captions": [
+            "Master coding in 30 days 💻 Interactive learning modules built for fast growth.",
+            "Study hacks to boost your productivity by 10x 📚 Work smarter, not harder.",
+            "Unlock your career potential 🚀 Learn high-demand skills from industry experts.",
+            "Speak fluently with daily 5-minute bite-sized lessons 🗣️ Practical learning.",
+            "Transform how you manage time ⏳ Simple systems for effortless focus.",
+        ],
+        "usernames": ["skillup_daily", "study_hacks_in", "career_growth_lab", "future_learners", "code_with_ease"],
+        "ideas": lambda brand, hashtags: [
+            {
+                "caption": f"Learn skills that unlock your future 💡 Study smarter with {brand.name}.",
+                "hashtags": hashtags[:2] + ["#StudyHacks"],
+                "image_prompt": f"Student focused at an illuminated study desk with {brand.name} courseware, taking digital notes on a tablet, clear visual charts floating, 9:16 vertical, inspiring educational reel.",
+                "viral_score": 93,
+                "rationale": "Actionable study hacks consistently garner high save rates from students and professionals.",
+            },
+            {
+                "caption": f"Code your way to the top 💻 {brand.name} masterclasses.",
+                "hashtags": hashtags[:2] + ["#LearnCoding"],
+                "image_prompt": f"Fast-paced macro shot of glowing lines of code on a monitor running {brand.name} projects, sleek dark room with purple ambient lighting, 9:16 vertical.",
+                "viral_score": 88,
+                "rationale": "Tech skill tutorials attract highly motivated learners with strong conversion.",
+            },
+            {
+                "caption": f"5-minute daily productivity hacks 📚 Powered by {brand.name}.",
+                "hashtags": hashtags[:2] + ["#ProductivityTips"],
+                "image_prompt": f"Hands organizing a bullet journal with aesthetic stationery, quick time-lapse of task completion, 9:16 vertical.",
+                "viral_score": 82,
+                "rationale": "Time-saving routines generate rapid shares among ambitious creators.",
+            },
+        ]
+    },
+}
+
+def _get_industry_data(industry: Optional[str]):
+    ind = industry or "Beauty & Skincare"
+    if ind in INDUSTRY_DATA:
+        return INDUSTRY_DATA[ind]
+    return INDUSTRY_DATA["Beauty & Skincare"]
+
+def _mock_trends(hashtags: list[str], brand: Optional[BrandConfig] = None) -> list[dict]:
     import random
-    captions = [
-        "Your skin deserves only the best 🌿 Natural ingredients that actually work. No compromises. Ever.",
-        "Glass skin is achievable. Our Vitamin C range makes it real ✨ Shop now.",
-        "Ayurvedic wisdom meets modern science. Feel the difference 🌸 Toxin-free formula.",
-        "We said NO to parabens before it was cool 💪 Clean beauty that delivers results.",
-        "Real ingredients. Real results. Zero toxins 🌱 Your skin will thank you.",
-        "Glow from within ☀️ Our new serum is packed with Niacinamide for that glass skin moment.",
-        "Heritage ingredients. Future formulas 🏺 Sustainable packaging. Shop the range.",
-        "Gen-Z approved ✅ Vitamin C meets innovation. Because you deserve better skincare.",
-    ]
-    usernames = ["glowwithme.in", "skincarebypriya", "beautyobsessed.ig",
-                 "naturalbyheart", "cleanbeautychapter", "radiantindian", "ecobeautylover"]
+    industry = brand.industry if brand and brand.industry else "Beauty & Skincare"
+    data = _get_industry_data(industry)
+    captions = data["captions"]
+    usernames = data["usernames"]
+
     posts = []
     for i in range(20):
-        ht    = random.choice(hashtags)
+        ht = random.choice(hashtags) if hashtags else "#Trending"
         likes = random.randint(500, 45000)
         posts.append({
             "post_id":   str(uuid.uuid4()),
             "platform":  "Instagram",
             "username":  random.choice(usernames),
             "caption":   random.choice(captions),
-            "hashtags":  random.sample(hashtags, min(3, len(hashtags))),
+            "hashtags":  random.sample(hashtags, min(3, len(hashtags))) if len(hashtags)>=3 else hashtags,
             "likes":     likes,
             "comments":  random.randint(20, int(likes * 0.08)),
             "shares":    random.randint(5, int(likes * 0.05)),
@@ -157,7 +424,7 @@ def _build_trend_summary(posts: list[dict], brand: BrandConfig) -> dict:
     tag_avg_eng = {t: int(sum(v)/len(v)) for t, v in tag_engagement.items()}
 
     # Competitor mentions
-    comp_lower = [c.lower() for c in brand.competitors]
+    comp_lower = [c.lower() for c in (brand.competitors or [])]
     competitor_posts = [p for p in posts if any(c in p["caption"].lower() or c in p["username"].lower() for c in comp_lower)]
 
     top_tags = sorted(tag_avg_eng.items(), key=lambda x: x[1], reverse=True)
@@ -180,10 +447,10 @@ def _build_trend_summary(posts: list[dict], brand: BrandConfig) -> dict:
 
 @app.post("/api/trends")
 def get_trends(brand: BrandConfig):
-    hashtags = brand.hashtags or ["#Beauty", "#Skincare"]
+    hashtags = brand.hashtags or ["#Trending"]
     posts    = _fetch_apify(hashtags)
     if not posts:
-        posts = _mock_trends(hashtags)
+        posts = _mock_trends(hashtags, brand)
     summary  = _build_trend_summary(posts, brand)
     return summary
 
@@ -212,29 +479,10 @@ def _call_groq(system_prompt: str) -> list[dict]:
     return json.loads(content)
 
 def _mock_ideas(brand: BrandConfig) -> list[dict]:
-    return [
-        {
-            "caption": f"Your skin is the planet's skin too 🌿 {brand.name}'s clean range — no toxins, no compromises.",
-            "hashtags": (brand.hashtags or ["#CleanBeauty"])[:2] + ["#NaturalGlow"],
-            "image_prompt": f"Young Indian woman, radiant glowing skin, rooftop garden, golden hour, holding a minimalist serum bottle, 9:16 vertical frame, editorial beauty campaign, earthy tones — terracotta sage ivory.",
-            "viral_score": 94,
-            "rationale": "Sustainability + authenticity is the dominant Gen-Z value signal right now.",
-        },
-        {
-            "caption": f"Glow is not a filter. It's a ritual 🌸 {brand.name} — science meets nature in every drop.",
-            "hashtags": (brand.hashtags or ["#Skincare"])[:2] + ["#GlassSkin"],
-            "image_prompt": f"Close-up of glowing Indian skin, single drop of amber serum falling from dropper, marble surface, saffron strands, warm candlelight, macro lens, 9:16 vertical, luxury editorial.",
-            "viral_score": 87,
-            "rationale": "Ritual-based skincare content consistently outperforms product-push posts by 3x.",
-        },
-        {
-            "caption": f"Real ingredients. Real results 💪 {brand.name} Clean — because your skin deserves honesty.",
-            "hashtags": (brand.hashtags or ["#Beauty"])[:2] + ["#SkincareRoutine"],
-            "image_prompt": f"Overhead flat lay of {brand.name} products on white marble, eucalyptus leaves, white flowers, bright natural daylight, geometric arrangement, top-down shot, 9:16 vertical, studio photography.",
-            "viral_score": 79,
-            "rationale": "Ingredient transparency builds long-term brand trust and repeat purchaser loyalty.",
-        },
-    ]
+    industry = brand.industry if brand and brand.industry else "Beauty & Skincare"
+    data = _get_industry_data(industry)
+    hashtags = brand.hashtags or ["#Trending"]
+    return data["ideas"](brand, hashtags)
 
 @app.post("/api/generate")
 def generate_ideas(req: GenerateRequest):
@@ -248,7 +496,7 @@ def generate_ideas(req: GenerateRequest):
     gap_tag  = trends.get("gap_hashtag", top_tag)
     comp_str = ", ".join(brand.competitors) if brand.competitors else "Competitors"
 
-    prompt = f"""You are the Creative Director for {brand.name} ({brand.industry}).
+    prompt = f"""You are the Creative Director for {brand.name} (Industry: {brand.industry}).
 Brand tone: {brand.tone}
 Target audience: {brand.audience}
 
@@ -259,12 +507,12 @@ LIVE Instagram trend data right now:
 - Total posts analysed: {trends.get('total_posts', 0)}
 
 Generate exactly 3 Instagram Reel concepts as a JSON array.
-Each concept must be designed to go viral based on the live trend data above.
+Each concept MUST be specifically tailored to the {brand.industry} industry, brand tone '{brand.tone}', and target audience.
 
 Rules:
-- caption: max 150 chars, punchy, fits brand tone, no generic AI phrases, include 1-2 emojis
+- caption: max 150 chars, punchy, fits brand tone and industry, no generic AI phrases, include 1-2 emojis
 - hashtags: array of exactly 3 hashtags, must include {top_tag}
-- image_prompt: rich visual direction for AI video generation — describe lighting, talent, colours, mood, props, camera angle, aspect ratio 9:16, motion style
+- image_prompt: rich visual direction for AI video generation — describe lighting, talent, colours, mood, props, camera angle, aspect ratio 9:16, motion style suitable for {brand.industry}
 - viral_score: integer 1-100 based on trend alignment
 - rationale: one sentence why this will perform based on the data above
 

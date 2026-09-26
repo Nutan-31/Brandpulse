@@ -1,208 +1,629 @@
-import { TrendingUp, Users, Target, AlertTriangle, ArrowRight, Heart, MessageCircle, BarChart2 } from 'lucide-react'
+import {
+  TrendingUp,
+  Users,
+  Target,
+  AlertTriangle,
+  ArrowRight,
+  Heart,
+  MessageCircle,
+  BarChart2,
+  Sparkles,
+} from 'lucide-react'
 
-function TrendBar({ tag, engagement, count, max }) {
-  const pct = max > 0 ? (engagement / max) * 100 : 0
+function formatNumber(value) {
+  const num = Number(value || 0)
+
+  if (num >= 1000000) {
+    return `${(num / 1000000).toFixed(1)}M`
+  }
+
+  if (num >= 1000) {
+    return `${(num / 1000).toFixed(1)}K`
+  }
+
+  return num.toLocaleString()
+}
+
+function TrendBar({
+  tag,
+  engagement,
+  count,
+  max,
+  index,
+}) {
+  const pct =
+    max > 0
+      ? Math.min((engagement / max) * 100, 100)
+      : 0
+
   return (
-    <div className="flex items-center gap-3 py-2">
-      <span style={{ color: '#A1A1AA', fontSize: '12px', fontFamily: 'Fira Code', width: '140px', flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {tag}
-      </span>
-      <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
-        <div
-          className="h-full rounded-full"
+    <div
+      className="group py-4"
+      style={{
+        borderBottom:
+          '1px solid rgba(255,255,255,0.05)',
+      }}
+    >
+
+      <div className="flex items-center gap-4">
+
+        <span
+          className="font-mono text-[10px] text-dim w-5"
+        >
+          {String(index + 1).padStart(2, '0')}
+        </span>
+
+        <span
+          className="font-mono text-xs w-28 sm:w-36 truncate"
           style={{
-            width: `${pct}%`,
-            background: 'linear-gradient(90deg, var(--accent), #00B377)',
-            transition: 'width 0.8s ease',
-            boxShadow: '0 0 6px rgba(0,214,143,0.3)',
+            color: 'var(--text-soft)',
           }}
-        />
+        >
+          {tag}
+        </span>
+
+        <div className="flex-1 trend-bar-track">
+          <div
+            className="trend-bar-fill"
+            style={{
+              width: `${pct}%`,
+            }}
+          />
+        </div>
+
+        <span
+          className="font-mono text-[10px] w-14 text-right"
+          style={{
+            color: 'var(--text-muted)',
+          }}
+        >
+          {formatNumber(engagement)}
+        </span>
+
+        <span
+          className="hidden sm:block font-mono text-[9px] w-10 text-right text-dim"
+        >
+          {count}p
+        </span>
+
       </div>
-      <span style={{ color: '#71717A', fontSize: '11px', fontFamily: 'Fira Code', width: '60px', textAlign: 'right', flexShrink: 0 }}>
-        {engagement >= 1000 ? `${(engagement/1000).toFixed(1)}K` : engagement}
-      </span>
-      <span style={{ color: '#3F3F46', fontSize: '10px', width: '30px', textAlign: 'right', flexShrink: 0 }}>
-        {count}p
-      </span>
+
     </div>
   )
 }
 
 function PostCard({ post }) {
-  const eng = post.likes + post.comments
   return (
-    <div className="card-elevated p-4 rounded-2xl flex flex-col gap-3"
-      style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
-      {post.thumbnail && (
-        <div className="w-full rounded-xl overflow-hidden bg-zinc-900" style={{ aspectRatio: '1/1' }}>
-          <img src={post.thumbnail} alt="" className="w-full h-full object-cover"
-            onError={e => { e.target.style.display = 'none' }} />
+    <div
+      className="card-hover rounded-2xl overflow-hidden"
+      style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--border-soft)',
+      }}
+    >
+
+      {post.thumbnail ? (
+        <div
+          className="relative w-full overflow-hidden"
+          style={{
+            aspectRatio: '1 / 1',
+            background: 'var(--surface-2)',
+          }}
+        >
+
+          <img
+            src={post.thumbnail}
+            alt=""
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none'
+            }}
+          />
+
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                'linear-gradient(to top, rgba(8,10,9,0.7), transparent 50%)',
+            }}
+          />
+
+        </div>
+      ) : (
+        <div
+          className="w-full flex items-center justify-center"
+          style={{
+            aspectRatio: '1 / 1',
+            background:
+              'linear-gradient(135deg, var(--surface-2), var(--surface-3))',
+          }}
+        >
+          <Sparkles
+            size={24}
+            style={{
+              color: 'var(--text-dim)',
+            }}
+          />
         </div>
       )}
-      <div>
-        <p style={{ color: '#FAFAFA', fontSize: '12px', lineHeight: '1.5', margin: 0 }}
-          className="line-clamp-3">
-          {post.caption}
+
+      <div className="p-4">
+
+        <p
+          className="text-xs leading-relaxed line-clamp-3"
+          style={{
+            color: 'var(--text-soft)',
+          }}
+        >
+          {post.caption || 'No caption available'}
         </p>
+
+        <div className="flex flex-wrap gap-1.5 mt-3">
+
+          {(post.hashtags || [])
+            .slice(0, 3)
+            .map((tag) => (
+              <span
+                key={tag}
+                className="font-mono text-[9px]"
+                style={{
+                  color: 'var(--accent)',
+                }}
+              >
+                {tag}
+              </span>
+            ))}
+
+        </div>
+
+        <div
+          className="flex items-center gap-4 mt-4 pt-3"
+          style={{
+            borderTop:
+              '1px solid rgba(255,255,255,0.05)',
+            color: 'var(--text-muted)',
+          }}
+        >
+
+          <span className="flex items-center gap-1 text-[10px]">
+            <Heart size={11} />
+            {formatNumber(post.likes)}
+          </span>
+
+          <span className="flex items-center gap-1 text-[10px]">
+            <MessageCircle size={11} />
+            {formatNumber(post.comments)}
+          </span>
+
+          {post.post_url && (
+            <a
+              href={post.post_url}
+              target="_blank"
+              rel="noreferrer"
+              className="ml-auto font-mono text-[9px]"
+              style={{
+                color: 'var(--accent)',
+              }}
+            >
+              VIEW ↗
+            </a>
+          )}
+
+        </div>
+
       </div>
-      <div className="flex flex-wrap gap-1">
-        {(post.hashtags || []).slice(0, 3).map(t => (
-          <span key={t} style={{ color: 'var(--accent)', fontSize: '10px', fontFamily: 'Fira Code' }}>{t}</span>
-        ))}
-      </div>
-      <div className="flex items-center gap-4" style={{ color: '#71717A', fontSize: '11px' }}>
-        <span className="flex items-center gap-1"><Heart size={11} /> {post.likes >= 1000 ? `${(post.likes/1000).toFixed(1)}K` : post.likes}</span>
-        <span className="flex items-center gap-1"><MessageCircle size={11} /> {post.comments}</span>
-        {post.post_url && (
-          <a href={post.post_url} target="_blank" rel="noreferrer"
-            style={{ color: 'var(--accent)', marginLeft: 'auto', fontSize: '10px' }}>
-            View ↗
-          </a>
-        )}
-      </div>
+
     </div>
   )
 }
 
-export default function TrendFeed({ brand, trends, onGenerate, generating }) {
+function Metric({
+  number,
+  label,
+  icon: Icon,
+  accent,
+}) {
+  return (
+    <div
+      className="p-5 md:p-6"
+      style={{
+        borderRight:
+          '1px solid rgba(255,255,255,0.06)',
+      }}
+    >
+
+      <Icon
+        size={16}
+        style={{
+          color: accent,
+          marginBottom: '18px',
+        }}
+      />
+
+      <div
+        className="metric-number"
+        style={{
+          color: accent,
+        }}
+      >
+        {formatNumber(number)}
+      </div>
+
+      <div className="font-mono text-[9px] text-muted uppercase tracking-[0.14em] mt-2">
+        {label}
+      </div>
+
+    </div>
+  )
+}
+
+export default function TrendFeed({
+  brand,
+  trends,
+  onGenerate,
+  generating,
+}) {
   if (!trends) return null
 
   const topTags = trends.top_hashtags || []
-  const maxEng  = topTags[0]?.avg_engagement || 1
-  const posts   = (trends.posts || []).filter(p => p.caption)
+
+  const maxEngagement =
+    topTags[0]?.avg_engagement || 1
+
+  const posts = (trends.posts || []).filter(
+    (post) => post.caption
+  )
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8" style={{ animation: 'fadeIn 0.4s ease' }}>
+    <div className="page-container pb-16">
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 mb-8">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="pill pill-accent" style={{ fontSize: '10px' }}>LIVE TRENDS</span>
-            <span className="pill pill-muted" style={{ fontSize: '10px' }}>{trends.total_posts} posts analysed</span>
-          </div>
-          <h1 className="font-display text-2xl font-bold" style={{ fontFamily: 'Syne', fontWeight: 800 }}>
-            What's trending for <span style={{ color: 'var(--accent)' }}>{brand.name}</span>
-          </h1>
-          <p style={{ color: '#71717A', fontSize: '14px', marginTop: '6px' }}>
-            Real-time Instagram data for your hashtags
-          </p>
-        </div>
-        <button
-          className="btn btn-approve flex-shrink-0"
-          style={{ padding: '12px 20px', fontSize: '14px', fontWeight: 700 }}
-          onClick={onGenerate}
-          disabled={generating}
-        >
-          {generating ? '⏳ Generating…' : <><Sparkles size={15} /> Generate Ideas</>}
-          <ArrowRight size={15} />
-        </button>
-      </div>
+      {/* MARKET PULSE */}
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-        {[
-          { label: 'Posts analysed',     value: trends.total_posts,        color: 'var(--accent)', icon: BarChart2 },
-          { label: 'Competitor posts',   value: trends.competitor_count,   color: '#F59E0B',       icon: Target },
-          { label: 'Your brand posts',   value: trends.brand_post_count,   color: '#8B5CF6',       icon: Users },
-          { label: 'Trending hashtags',  value: topTags.length,            color: '#F04747',       icon: TrendingUp },
-        ].map(({ label, value, color, icon: Icon }) => (
-          <div key={label} className="card p-4">
-            <Icon size={16} style={{ color, marginBottom: '8px' }} />
-            <div className="font-display text-2xl font-bold" style={{ fontFamily: 'Syne', color, fontWeight: 800 }}>{value}</div>
-            <div style={{ color: '#71717A', fontSize: '11px', marginTop: '2px' }}>{label}</div>
-          </div>
-        ))}
-      </div>
+      <section className="mb-12">
 
-      {/* Gap alert */}
-      {trends.gap_hashtag && (
-        <div className="flex items-start gap-3 p-4 rounded-2xl mb-8"
-          style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.2)', borderLeft: '3px solid #F59E0B' }}>
-          <AlertTriangle size={16} style={{ color: '#F59E0B', flexShrink: 0, marginTop: '2px' }} />
+        <div className="flex items-end justify-between mb-4">
+
           <div>
-            <div style={{ color: '#F59E0B', fontSize: '12px', fontWeight: 700, fontFamily: 'Fira Code', letterSpacing: '0.06em' }}>
-              COMPETITOR GAP DETECTED
+            <div className="eyebrow">
+              <span className="live-dot" />
+              MARKET PULSE
             </div>
-            <p style={{ color: '#D4A853', fontSize: '13px', margin: '4px 0 0' }}>
-              <strong style={{ color: '#F5C569', fontFamily: 'Fira Code' }}>{trends.gap_hashtag}</strong> has{' '}
-              <strong style={{ color: '#F5C569' }}>{trends.gap_engagement?.toLocaleString() || 'high'}</strong> avg engagement —
-              your brand has 0 posts there. This is your opportunity.
+
+            <p className="text-muted text-xs mt-2">
+              Live intelligence surrounding{' '}
+              <span className="text-accent">
+                {brand.name}
+              </span>
             </p>
           </div>
+
+          <div className="hidden sm:block font-mono text-[9px] text-dim">
+            INSTAGRAM / LIVE
+          </div>
+
         </div>
+
+        <div
+          className="grid grid-cols-2 md:grid-cols-4 rounded-2xl overflow-hidden"
+          style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+          }}
+        >
+
+          <Metric
+            number={trends.total_posts}
+            label="Posts analysed"
+            icon={BarChart2}
+            accent="var(--accent)"
+          />
+
+          <Metric
+            number={trends.competitor_count}
+            label="Competitor posts"
+            icon={Target}
+            accent="var(--amber)"
+          />
+
+          <Metric
+            number={trends.brand_post_count}
+            label="Your brand posts"
+            icon={Users}
+            accent="var(--purple)"
+          />
+
+          <Metric
+            number={topTags.length}
+            label="Trending signals"
+            icon={TrendingUp}
+            accent="var(--danger)"
+          />
+
+        </div>
+
+      </section>
+
+      {/* GAP */}
+
+      {trends.gap_hashtag && (
+        <section
+          className="relative overflow-hidden rounded-[24px] p-6 md:p-8 mb-12"
+          style={{
+            background:
+              'linear-gradient(110deg, rgba(232,169,74,0.08), rgba(232,169,74,0.025))',
+            border:
+              '1px solid rgba(232,169,74,0.18)',
+          }}
+        >
+
+          <div
+            className="absolute right-[-50px] top-[-70px] w-48 h-48 rounded-full"
+            style={{
+              border:
+                '1px solid rgba(232,169,74,0.12)',
+            }}
+          />
+
+          <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+
+            <div className="flex gap-4">
+
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                style={{
+                  background:
+                    'rgba(232,169,74,0.1)',
+                  color: 'var(--amber)',
+                }}
+              >
+                <AlertTriangle size={17} />
+              </div>
+
+              <div>
+
+                <div
+                  className="font-mono text-[10px] tracking-[0.14em]"
+                  style={{
+                    color: 'var(--amber)',
+                  }}
+                >
+                  COMPETITOR GAP DETECTED
+                </div>
+
+                <h3 className="font-display text-xl font-bold mt-2 text-white">
+                  {trends.gap_hashtag}
+                </h3>
+
+                <p className="text-sm text-muted mt-1 max-w-xl">
+                  This signal is generating{' '}
+                  <strong
+                    style={{
+                      color: 'var(--cream)',
+                    }}
+                  >
+                    {formatNumber(
+                      trends.gap_engagement
+                    )}
+                  </strong>{' '}
+                  average engagement, while your
+                  brand has no posts targeting it.
+                </p>
+
+              </div>
+
+            </div>
+
+            <div className="hidden md:block font-mono text-[9px] text-dim whitespace-nowrap">
+              OPPORTUNITY / 01
+            </div>
+
+          </div>
+
+        </section>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* MAIN INTELLIGENCE */}
 
-        {/* Trending hashtags */}
-        <div className="card p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp size={15} style={{ color: 'var(--accent)' }} />
-            <h3 className="font-display font-bold text-sm" style={{ fontFamily: 'Syne', fontWeight: 700 }}>
-              Top Trending Hashtags
-            </h3>
-          </div>
-          <div className="flex flex-col divide-y" style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
-            {topTags.slice(0, 8).map(({ tag, avg_engagement, count }) => (
-              <TrendBar key={tag} tag={tag} engagement={avg_engagement} count={count} max={maxEng} />
-            ))}
-            {topTags.length === 0 && (
-              <p style={{ color: '#52525B', fontSize: '12px', padding: '12px 0' }}>No trend data yet</p>
-            )}
-          </div>
-        </div>
+      <section className="grid lg:grid-cols-[1.05fr_0.95fr] gap-8">
 
-        {/* Recent posts grid */}
+        {/* TRENDING */}
+
         <div>
-          <div className="flex items-center gap-2 mb-4">
-            <MessageCircle size={15} style={{ color: '#8B5CF6' }} />
-            <h3 className="font-display font-bold text-sm" style={{ fontFamily: 'Syne', fontWeight: 700 }}>
-              Recent Posts
-            </h3>
+
+          <div className="flex items-end justify-between mb-5">
+
+            <div>
+              <div className="eyebrow">
+                <TrendingUp size={11} />
+                TRENDING NOW
+              </div>
+
+              <h2 className="font-display text-xl font-bold mt-2">
+                Where attention is moving.
+              </h2>
+            </div>
+
+            <span className="font-mono text-[9px] text-dim">
+              ENGAGEMENT
+            </span>
+
           </div>
-          <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto pr-1">
-            {posts.slice(0, 6).map(post => (
-              <PostCard key={post.post_id} post={post} />
-            ))}
-            {posts.length === 0 && (
-              <div className="col-span-2 card p-6 text-center" style={{ color: '#52525B', fontSize: '13px' }}>
-                Fetching real posts… mock data shown for demo
+
+          <div
+            className="rounded-2xl px-4"
+            style={{
+              background: 'var(--surface)',
+              border:
+                '1px solid var(--border-soft)',
+            }}
+          >
+
+            {topTags.slice(0, 8).map(
+              ({ tag, avg_engagement, count }, index) => (
+                <TrendBar
+                  key={tag}
+                  tag={tag}
+                  engagement={avg_engagement}
+                  count={count}
+                  max={maxEngagement}
+                  index={index}
+                />
+              )
+            )}
+
+            {topTags.length === 0 && (
+              <div className="py-12 text-center text-muted text-xs">
+                No trend data available yet.
               </div>
             )}
+
           </div>
+
         </div>
 
-      </div>
+        {/* POSTS */}
 
-      {/* Generate CTA */}
-      <div className="mt-8 p-6 rounded-2xl text-center"
-        style={{ background: 'rgba(0,214,143,0.05)', border: '1px solid rgba(0,214,143,0.15)' }}>
-        <p style={{ color: '#A1A1AA', fontSize: '14px', marginBottom: '16px' }}>
-          Based on these trends, Groq AI will generate 3 targeted Reel concepts for <strong style={{ color: '#FAFAFA' }}>{brand.name}</strong>
-        </p>
-        <button
-          className="btn btn-approve"
-          style={{ padding: '12px 28px', fontSize: '15px', fontWeight: 700 }}
-          onClick={onGenerate}
-          disabled={generating}
-        >
-          {generating ? '⏳ Thinking with Groq…' : <><Sparkles size={16} /> Generate My Reel Ideas</>}
-          {!generating && <ArrowRight size={16} />}
-        </button>
-      </div>
+        <div>
+
+          <div className="flex items-end justify-between mb-5">
+
+            <div>
+              <div className="eyebrow">
+                <MessageCircle size={11} />
+                RECENT CONTENT
+              </div>
+
+              <h2 className="font-display text-xl font-bold mt-2">
+                What's already working.
+              </h2>
+            </div>
+
+            <span className="font-mono text-[9px] text-dim">
+              LIVE FEED
+            </span>
+
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+
+            {posts.slice(0, 6).map((post) => (
+              <PostCard
+                key={post.post_id}
+                post={post}
+              />
+            ))}
+
+            {posts.length === 0 && (
+              <div
+                className="col-span-2 rounded-2xl p-10 text-center"
+                style={{
+                  background: 'var(--surface)',
+                  border:
+                    '1px solid var(--border-soft)',
+                }}
+              >
+                <Sparkles
+                  size={20}
+                  className="mx-auto mb-3"
+                  style={{
+                    color: 'var(--text-dim)',
+                  }}
+                />
+
+                <p className="text-xs text-muted">
+                  Fetching real posts...
+                </p>
+
+              </div>
+            )}
+
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* CTA */}
+
+      <section
+        className="relative overflow-hidden mt-12 rounded-[28px] p-8 md:p-12"
+        style={{
+          background:
+            'linear-gradient(120deg, rgba(99,230,190,0.08), rgba(99,230,190,0.025))',
+          border:
+            '1px solid rgba(99,230,190,0.15)',
+        }}
+      >
+
+        <div
+          className="absolute right-[-100px] bottom-[-120px] w-72 h-72 rounded-full"
+          style={{
+            border:
+              '1px solid rgba(99,230,190,0.08)',
+          }}
+        />
+
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-8">
+
+          <div className="max-w-2xl">
+
+            <div className="eyebrow text-accent">
+              <Sparkles size={11} />
+              AI CREATIVE ENGINE
+            </div>
+
+            <h2 className="font-display text-2xl md:text-3xl font-bold mt-3">
+              The data has spoken.
+              <br />
+              <span className="text-accent">
+                Now make something.
+              </span>
+            </h2>
+
+            <p className="text-muted text-sm mt-4 max-w-xl leading-relaxed">
+              Groq will transform these live market signals
+              into three targeted Reel concepts for{' '}
+              <span className="text-white">
+                {brand.name}
+              </span>.
+            </p>
+
+          </div>
+
+          <button
+            className="btn btn-approve group shrink-0"
+            onClick={onGenerate}
+            disabled={generating}
+            style={{
+              padding: '15px 22px',
+              fontSize: '13px',
+            }}
+          >
+
+            {generating ? (
+              <>
+                <Sparkles
+                  size={15}
+                  className="animate-pulse"
+                />
+                Reading signals...
+              </>
+            ) : (
+              <>
+                Generate concepts
+                <ArrowRight
+                  size={16}
+                  className="transition-transform group-hover:translate-x-1"
+                />
+              </>
+            )}
+
+          </button>
+
+        </div>
+
+      </section>
 
     </div>
-  )
-}
-
-// tiny local import fix
-function Sparkles({ size }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/>
-      <path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/>
-      <path d="M19 3l.5 1.5L21 5l-1.5.5L19 7l-.5-1.5L17 5l1.5-.5L19 3z"/>
-    </svg>
   )
 }
