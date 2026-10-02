@@ -1,4 +1,5 @@
-﻿import { useState } from 'react'
+﻿
+import { useState } from 'react'
 import { api } from './api.js'
 
 import BrandSetup from './components/BrandSetup.jsx'
@@ -7,124 +8,283 @@ import IdeaCards from './components/IdeaCards.jsx'
 import VideoStudio from './components/VideoStudio.jsx'
 
 import {
+  LayoutDashboard,
+  BriefcaseBusiness,
+  TrendingUp,
+  Lightbulb,
+  Clapperboard,
+  Settings,
+  HelpCircle,
+  Bell,
+  Search,
   Check,
   Circle,
   Sparkles,
   Zap,
   Activity,
+  ChevronRight,
 } from 'lucide-react'
 
 
 // ============================================================
-// STEPS
+// NAVIGATION
 // ============================================================
 
-const STEPS = [
-  { number: '01', label: 'Brand' },
-  { number: '02', label: 'Signals' },
-  { number: '03', label: 'Concepts' },
-  { number: '04', label: 'Studio' },
+const NAV_ITEMS = [
+  {
+    id: 0,
+    label: 'Overview',
+    icon: LayoutDashboard,
+  },
+  {
+    id: 1,
+    label: 'Brand',
+    icon: BriefcaseBusiness,
+  },
+  {
+    id: 2,
+    label: 'Trends',
+    icon: TrendingUp,
+  },
+  {
+    id: 3,
+    label: 'Ideas',
+    icon: Lightbulb,
+  },
+  {
+    id: 4,
+    label: 'Video Studio',
+    icon: Clapperboard,
+  },
 ]
 
 
 // ============================================================
-// BRANDPULSE LOGO
+// BRAND MARK
 // ============================================================
 
 function BrandMark() {
   return (
-    <div className="bp-logo">
-
-      <div className="bp-logo-mark">
-        <Zap size={14} strokeWidth={2.5} />
+    <div className="dashboard-brand">
+      <div className="dashboard-brand-mark">
+        <Zap size={15} strokeWidth={2.7} />
       </div>
 
-      <div className="bp-logo-text">
-        Brand<span>Pulse</span>
-      </div>
+      <div>
+        <div className="dashboard-brand-name">
+          Brand<span>Pulse</span>
+        </div>
 
+        <div className="dashboard-brand-subtitle">
+          AI MARKETING INTELLIGENCE
+        </div>
+      </div>
     </div>
   )
 }
 
 
 // ============================================================
-// TOP NAVIGATION / STEP BAR
+// SIDEBAR
 // ============================================================
 
-function StepBar({ current }) {
-
+function Sidebar({ step, onNavigate, brand }) {
   return (
-    <header className="bp-nav">
+    <aside className="dashboard-sidebar">
 
-      <div className="bp-nav-inner">
+      <div className="sidebar-top">
 
         <BrandMark />
 
-
-        <div className="bp-steps">
-
-          {STEPS.map((item, index) => {
-
-            const done = index < current
-            const active = index === current
-
-            return (
-
-              <div
-                key={item.number}
-                className="flex items-center"
-              >
-
-                <div
-                  className={`bp-step ${active ? 'active' : ''
-                    } ${done ? 'done' : ''
-                    }`}
-                >
-
-                  <span className="bp-step-number">
-
-                    {done ? (
-                      <Check
-                        size={11}
-                        strokeWidth={3}
-                      />
-                    ) : (
-                      item.number
-                    )}
-
-                  </span>
-
-
-                  <span className="hidden sm:inline">
-                    {item.label}
-                  </span>
-
-                </div>
-
-
-                {index < STEPS.length - 1 && (
-
-                  <div className="section-line hidden sm:block" />
-
-                )}
-
-              </div>
-
-            )
-
-          })}
-
+        <div className="sidebar-section-label">
+          WORKSPACE
         </div>
 
+        <nav className="sidebar-nav">
 
-        <div className="hidden md:flex items-center gap-2 ml-auto">
+          {NAV_ITEMS.map((item) => {
 
-          <span className="live-dot" />
+            const Icon = item.icon
 
-          <span className="font-mono text-[10px] text-muted tracking-wider">
-            AI WORKSPACE
+            // Overview is available visually,
+            // but the actual workflow starts at Brand.
+            const targetStep =
+              item.id === 0
+                ? 0
+                : item.id - 1
+
+            const active =
+              item.id === step + 1 ||
+              (step === 0 && item.id === 1)
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={`sidebar-nav-item ${
+                  active ? 'active' : ''
+                }`}
+                onClick={() => {
+
+                  if (item.id === 1) {
+                    onNavigate(0)
+                  }
+
+                  if (item.id === 2 && brand) {
+                    onNavigate(1)
+                  }
+
+                  if (item.id === 3 && brand) {
+                    onNavigate(2)
+                  }
+
+                  if (item.id === 4 && brand) {
+                    onNavigate(3)
+                  }
+
+                }}
+              >
+
+                <Icon size={17} strokeWidth={1.9} />
+
+                <span>
+                  {item.label}
+                </span>
+
+                {active && (
+                  <span className="sidebar-active-indicator" />
+                )}
+
+              </button>
+            )
+          })}
+
+        </nav>
+
+      </div>
+
+
+      <div className="sidebar-bottom">
+
+        <div className="sidebar-divider" />
+
+        <button
+          type="button"
+          className="sidebar-nav-item"
+        >
+          <Settings size={17} strokeWidth={1.9} />
+          <span>Settings</span>
+        </button>
+
+        <button
+          type="button"
+          className="sidebar-nav-item"
+        >
+          <HelpCircle size={17} strokeWidth={1.9} />
+          <span>Help & Support</span>
+        </button>
+
+
+        {brand && (
+
+          <div className="sidebar-brand-card">
+
+            <div className="sidebar-brand-avatar">
+              {brand.name?.charAt(0)?.toUpperCase() || 'B'}
+            </div>
+
+            <div className="sidebar-brand-info">
+
+              <span className="sidebar-brand-label">
+                ACTIVE BRAND
+              </span>
+
+              <strong>
+                {brand.name}
+              </strong>
+
+            </div>
+
+          </div>
+
+        )}
+
+      </div>
+
+    </aside>
+  )
+}
+
+
+// ============================================================
+// TOPBAR
+// ============================================================
+
+function Topbar({ step, brand }) {
+
+  const titles = [
+    'Brand workspace',
+    'Market signals',
+    'Creative concepts',
+    'Video studio',
+  ]
+
+  return (
+    <header className="dashboard-topbar">
+
+      <div className="topbar-page-title">
+
+        <span className="topbar-eyebrow">
+          {titles[step] || 'Brand workspace'}
+        </span>
+
+        {brand && (
+          <span className="topbar-brand">
+            {brand.name}
           </span>
+        )}
+
+      </div>
+
+
+      <div className="topbar-actions">
+
+        <button
+          type="button"
+          className="topbar-icon-button"
+          aria-label="Search"
+        >
+          <Search size={18} />
+        </button>
+
+        <button
+          type="button"
+          className="topbar-icon-button"
+          aria-label="Notifications"
+        >
+          <Bell size={18} />
+          <span className="notification-dot" />
+        </button>
+
+        <div className="topbar-divider" />
+
+        <div className="topbar-profile">
+
+          <div className="topbar-avatar">
+            {brand?.name?.charAt(0)?.toUpperCase() || 'B'}
+          </div>
+
+          <div className="topbar-profile-copy">
+
+            <strong>
+              Brand workspace
+            </strong>
+
+            <span>
+              AI marketing
+            </span>
+
+          </div>
 
         </div>
 
@@ -136,59 +296,112 @@ function StepBar({ current }) {
 
 
 // ============================================================
-// PAGE INTRO
+// PAGE HEADER
 // ============================================================
 
-function PageIntro({
-  number,
+function PageHeader({
   eyebrow,
   title,
   description,
+  number,
 }) {
 
   return (
+    <div className="dashboard-page-header">
 
-    <div className="page-container pt-12 pb-8">
+      <div className="dashboard-page-number">
+        {number}
+      </div>
 
-      <div className="flex items-start gap-5">
+      <div className="dashboard-page-copy">
 
-        <div className="section-number">
-          {number}
-        </div>
+        <div className="dashboard-eyebrow">
 
+          <Activity size={12} />
 
-        <div className="max-w-3xl">
-
-          <div className="eyebrow mb-4">
-
-            <Activity size={11} />
-
+          <span>
             {eyebrow}
-
-          </div>
-
-
-          <h1 className="display-title">
-            {title}
-          </h1>
-
-
-          {description && (
-
-            <p className="text-muted text-base md:text-lg mt-5 max-w-2xl leading-relaxed">
-
-              {description}
-
-            </p>
-
-          )}
+          </span>
 
         </div>
+
+        <h1>
+          {title}
+        </h1>
+
+        {description && (
+          <p>
+            {description}
+          </p>
+        )}
 
       </div>
 
     </div>
+  )
+}
 
+
+// ============================================================
+// PROGRESS
+// ============================================================
+
+function WorkflowProgress({ step }) {
+
+  const stages = [
+    'Brand',
+    'Signals',
+    'Concepts',
+    'Studio',
+  ]
+
+  return (
+    <div className="workflow-progress">
+
+      {stages.map((stage, index) => {
+
+        const done = index < step
+        const active = index === step
+
+        return (
+          <div
+            key={stage}
+            className="workflow-progress-item"
+          >
+
+            <div
+              className={`workflow-progress-circle ${
+                done ? 'done' : ''
+              } ${active ? 'active' : ''}`}
+            >
+
+              {done ? (
+                <Check size={11} strokeWidth={3} />
+              ) : (
+                index + 1
+              )}
+
+            </div>
+
+            <span
+              className={
+                active
+                  ? 'active'
+                  : ''
+              }
+            >
+              {stage}
+            </span>
+
+            {index < stages.length - 1 && (
+              <div className="workflow-progress-line" />
+            )}
+
+          </div>
+        )
+      })}
+
+    </div>
   )
 }
 
@@ -201,53 +414,30 @@ function Toast({ msg, type }) {
 
   if (!msg) return null
 
-
   return (
 
     <div
-      className="toast"
-      style={{
-        borderColor:
-          type === 'error'
-            ? 'rgba(240,100,100,0.35)'
-            : 'rgba(99,230,190,0.25)',
-      }}
+      className={`dashboard-toast ${
+        type === 'error'
+          ? 'error'
+          : ''
+      }`}
     >
 
-      <div
-        className="flex items-center justify-center w-7 h-7 rounded-full"
-        style={{
-          background:
-            type === 'error'
-              ? 'rgba(240,100,100,0.12)'
-              : 'rgba(99,230,190,0.12)',
+      <div className="dashboard-toast-icon">
 
-          color:
-            type === 'error'
-              ? 'var(--danger)'
-              : 'var(--accent)',
-        }}
-      >
-
-        {type === 'error' ? (
-
-          <Circle size={13} />
-
-        ) : (
-
-          <Check size={14} />
-
-        )}
+        {type === 'error'
+          ? <Circle size={14} />
+          : <Check size={14} />
+        }
 
       </div>
-
 
       <span>
         {msg}
       </span>
 
     </div>
-
   )
 }
 
@@ -260,53 +450,42 @@ function LoadingOverlay() {
 
   return (
 
-    <div
-      className="loading-overlay"
-    >
+    <div className="dashboard-loading">
 
-      <div className="generation-orbit">
+      <div className="dashboard-loading-card">
 
-        <div className="generation-orbit-ring ring-one" />
+        <div className="dashboard-loading-icon">
 
-        <div className="generation-orbit-ring ring-two" />
+          <div className="loading-ring ring-one" />
+          <div className="loading-ring ring-two" />
 
-        <div className="generation-core">
-
-          <Sparkles size={25} />
-
-        </div>
-
-      </div>
-
-
-      <div className="loading-message">
-
-        <div className="eyebrow justify-center mb-3">
-
-          <span className="live-dot" />
-
-          LIVE DATA
+          <div className="loading-core">
+            <Sparkles size={23} />
+          </div>
 
         </div>
 
 
-        <h2 className="font-display text-2xl font-bold">
+        <div className="dashboard-loading-copy">
 
-          Reading the market
+          <div className="dashboard-eyebrow">
+            <span className="live-dot" />
+            LIVE DATA
+          </div>
 
-        </h2>
+          <h2>
+            Reading the market
+          </h2>
 
+          <p>
+            Scanning Instagram signals via Apify...
+          </p>
 
-        <p className="text-muted text-sm mt-2">
-
-          Scanning Instagram signals via Apify...
-
-        </p>
+        </div>
 
       </div>
 
     </div>
-
   )
 }
 
@@ -329,7 +508,6 @@ export default function App() {
 
   const [selectedIdea, setSelectedIdea] = useState(null)
 
-
   const [loadingTrends, setLoadingTrends] =
     useState(false)
 
@@ -341,7 +519,6 @@ export default function App() {
 
   const [regenerating, setRegenerating] =
     useState(false)
-
 
   const [toast, setToast] =
     useState(null)
@@ -361,13 +538,9 @@ export default function App() {
       type,
     })
 
-
     setTimeout(() => {
-
       setToast(null)
-
     }, 3500)
-
   }
 
 
@@ -379,30 +552,30 @@ export default function App() {
 
     setBrand(config)
 
-    setLoadingTrends(true)
+    setIdeas([])
 
+    setSelectedIdea(null)
+
+    setJobId(null)
+
+    setLoadingTrends(true)
 
     try {
 
       await api.saveBrand(config)
 
-
-      showToast(
-        'Brand saved. Fetching live Instagram signals...'
-      )
-
-
-      const t =
+      const liveTrends =
         await api.getTrends(config)
 
+      setTrends(liveTrends)
 
-      setTrends(t)
+      showToast(
+        'Brand saved. Pulling live market signals...'
+      )
 
       setStep(1)
 
-    }
-
-    catch (e) {
+    } catch (e) {
 
       showToast(
         e.message ||
@@ -410,14 +583,13 @@ export default function App() {
         'error'
       )
 
-    }
+      setTrends(null)
 
-    finally {
+    } finally {
 
       setLoadingTrends(false)
 
     }
-
   }
 
 
@@ -429,7 +601,6 @@ export default function App() {
 
     setLoadingIdeas(true)
 
-
     try {
 
       const result =
@@ -438,22 +609,17 @@ export default function App() {
           trends
         )
 
-
       setIdeas(
         result.ideas || []
       )
 
-
       setStep(2)
-
 
       showToast(
         '3 reel concepts generated by Groq Llama 3.3 70B'
       )
 
-    }
-
-    catch (e) {
+    } catch (e) {
 
       showToast(
         e.message ||
@@ -461,14 +627,11 @@ export default function App() {
         'error'
       )
 
-    }
-
-    finally {
+    } finally {
 
       setLoadingIdeas(false)
 
     }
-
   }
 
 
@@ -480,7 +643,6 @@ export default function App() {
 
     setRegenerating(true)
 
-
     try {
 
       const result =
@@ -489,19 +651,15 @@ export default function App() {
           trends
         )
 
-
       setIdeas(
         result.ideas || []
       )
-
 
       showToast(
         'Fresh concepts generated'
       )
 
-    }
-
-    catch (e) {
+    } catch (e) {
 
       showToast(
         e.message ||
@@ -509,14 +667,11 @@ export default function App() {
         'error'
       )
 
-    }
-
-    finally {
+    } finally {
 
       setRegenerating(false)
 
     }
-
   }
 
 
@@ -530,7 +685,6 @@ export default function App() {
 
     setLoadingVideo(true)
 
-
     try {
 
       const result =
@@ -539,22 +693,17 @@ export default function App() {
           brand
         )
 
-
       setJobId(
         result.job_id
       )
 
-
       setStep(3)
 
-
       showToast(
-        'Video generation started on Veo 3'
+        'Your video guide is being prepared.'
       )
 
-    }
-
-    catch (e) {
+    } catch (e) {
 
       showToast(
         e.message ||
@@ -562,14 +711,41 @@ export default function App() {
         'error'
       )
 
-    }
-
-    finally {
+    } finally {
 
       setLoadingVideo(false)
 
     }
+  }
 
+
+  // ==========================================================
+  // NAVIGATION
+  // ==========================================================
+
+  function handleNavigate(target) {
+
+    // Brand is always accessible.
+    if (target === 0) {
+      setStep(0)
+      return
+    }
+
+    // Don't allow skipping into stages
+    // where the required data doesn't exist.
+    if (target === 1 && brand) {
+      setStep(1)
+      return
+    }
+
+    if (target === 2 && ideas.length > 0) {
+      setStep(2)
+      return
+    }
+
+    if (target === 3 && selectedIdea) {
+      setStep(3)
+    }
   }
 
 
@@ -590,44 +766,31 @@ export default function App() {
     setJobId(null)
 
     setSelectedIdea(null)
-
   }
 
 
   // ==========================================================
-  // UI
+  // CURRENT PAGE
   // ==========================================================
 
-  return (
+  function renderPage() {
 
-    <div className="brandpulse-app">
+    // --------------------------------------------------------
+    // BRAND
+    // --------------------------------------------------------
 
+    if (step === 0) {
 
-      {/* ====================================================
-          NAVIGATION
-      ==================================================== */}
+      return (
 
-      {step > 0 && (
+        <>
 
-        <StepBar
-          current={step}
-        />
-
-      )}
-
-
-      {/* ====================================================
-          MAIN
-      ==================================================== */}
-
-      <main>
-
-
-        {/* ================================================
-            STEP 1 — BRAND SETUP
-        ================================================= */}
-
-        {step === 0 && (
+          <PageHeader
+            number="01"
+            eyebrow="BRAND WORKSPACE"
+            title="Set up your brand."
+            description="Define your brand context so BrandPulse can understand your market, audience and creative direction."
+          />
 
           <BrandSetup
             onComplete={
@@ -635,176 +798,189 @@ export default function App() {
             }
           />
 
-        )}
+        </>
+      )
+    }
 
 
-        {/* ================================================
-            STEP 2 — TREND ANALYSIS
-        ================================================= */}
+    // --------------------------------------------------------
+    // TRENDS
+    // --------------------------------------------------------
 
-        {step === 1 && brand && (
+    if (step === 1 && brand) {
 
-          <>
+      return (
 
-            <PageIntro
-              number="02"
+        <>
 
-              eyebrow="LIVE SIGNALS / INSTAGRAM"
+          <PageHeader
+            number="02"
+            eyebrow="LIVE MARKET SIGNALS"
+            title={
+              <>
+                Understand what
+                <br />
+                <span>people are watching.</span>
+              </>
+            }
+            description={
+              `Real-time Instagram intelligence mapped around ${brand.name}.`
+            }
+          />
 
-              title={
-                <>
-                  Read the market.
-                  <br />
+          <TrendFeed
+            brand={brand}
+            trends={trends}
+            onGenerate={
+              handleGenerateIdeas
+            }
+            generating={
+              loadingIdeas
+            }
+          />
 
-                  <span className="text-accent">
-                    Find the opening.
-                  </span>
-                </>
-              }
+        </>
+      )
+    }
 
-              description={
-                `Real-time Instagram intelligence mapped around ${brand.name}.`
-              }
+
+    // --------------------------------------------------------
+    // IDEAS
+    // --------------------------------------------------------
+
+    if (step === 2) {
+
+      return (
+
+        <>
+
+          <PageHeader
+            number="03"
+            eyebrow="AI CREATIVE LAB"
+            title={
+              <>
+                Turn signals into
+                <br />
+                <span>content people watch.</span>
+              </>
+            }
+            description="Three concept directions built from the market signals your audience is already responding to."
+          />
+
+          <IdeaCards
+            brand={brand}
+            ideas={ideas}
+            onSelectIdea={
+              handleSelectIdea
+            }
+            loading={
+              loadingVideo
+            }
+            onRegenerate={
+              handleRegenerate
+            }
+            regenerating={
+              regenerating
+            }
+          />
+
+        </>
+      )
+    }
+
+
+    // --------------------------------------------------------
+    // VIDEO
+    // --------------------------------------------------------
+
+    if (step === 3) {
+
+      return (
+
+        <>
+
+          <PageHeader
+            number="04"
+            eyebrow="VIDEO GUIDE / CREATIVE STUDIO"
+            title={
+              <>
+                Turn the concept
+                <br />
+                <span>into a real Reel.</span>
+              </>
+            }
+            description="BrandPulse gives you the framework to shoot, edit and publish the Reel yourself."
+          />
+
+          <VideoStudio
+            jobId={jobId}
+            brand={brand}
+            idea={selectedIdea}
+            onStartOver={
+              handleStartOver
+            }
+          />
+
+        </>
+      )
+    }
+
+    return null
+  }
+
+
+  // ==========================================================
+  // RENDER
+  // ==========================================================
+
+  return (
+
+    <div className="brandpulse-dashboard">
+
+      <Sidebar
+        step={step}
+        onNavigate={
+          handleNavigate
+        }
+        brand={brand}
+      />
+
+
+      <div className="dashboard-main">
+
+        <Topbar
+          step={step}
+          brand={brand}
+        />
+
+
+        <main className="dashboard-content">
+
+          {step > 0 && (
+            <WorkflowProgress
+              step={step}
             />
+          )}
 
+          {renderPage()}
 
-            <TrendFeed
-              brand={brand}
-              trends={trends}
-              onGenerate={
-                handleGenerateIdeas
-              }
-              generating={
-                loadingIdeas
-              }
-            />
+        </main>
 
-          </>
+      </div>
 
-        )}
-
-
-        {/* ================================================
-            STEP 3 — CONTENT IDEAS
-        ================================================= */}
-
-        {step === 2 && (
-
-          <>
-
-            <PageIntro
-              number="03"
-
-              eyebrow="AI CREATIVE LAB"
-
-              title={
-                <>
-                  Turn signals into
-                  <br />
-
-                  <span className="text-accent">
-                    something people watch.
-                  </span>
-                </>
-              }
-
-              description={
-                'Three AI-generated Reel concepts built from the live signals your audience is already responding to.'
-              }
-            />
-
-
-            <IdeaCards
-              brand={brand}
-              ideas={ideas}
-              onSelectIdea={
-                handleSelectIdea
-              }
-              loading={
-                loadingVideo
-              }
-              onRegenerate={
-                handleRegenerate
-              }
-              regenerating={
-                regenerating
-              }
-            />
-
-          </>
-
-        )}
-
-
-        {/* ================================================
-            STEP 4 — VIDEO STUDIO
-        ================================================= */}
-
-        {step === 3 && (
-
-          <>
-
-            <PageIntro
-              number="04"
-
-              eyebrow="VIDEO PRODUCTION / AI STUDIO"
-
-              title={
-                <>
-                  From concept
-                  <br />
-
-                  <span className="text-accent">
-                    to finished Reel.
-                  </span>
-                </>
-              }
-
-              description={
-                'Your selected concept is being transformed into a production-ready vertical video.'
-              }
-            />
-
-
-            <VideoStudio
-              jobId={jobId}
-              brand={brand}
-              idea={selectedIdea}
-              onStartOver={
-                handleStartOver
-              }
-            />
-
-          </>
-
-        )}
-
-      </main>
-
-
-      {/* ====================================================
-          LOADING
-      ==================================================== */}
 
       {loadingTrends && (
         <LoadingOverlay />
       )}
 
 
-      {/* ====================================================
-          TOAST
-      ==================================================== */}
-
       {toast && (
-
         <Toast
           msg={toast.msg}
           type={toast.type}
         />
-
       )}
 
     </div>
-
   )
 }
