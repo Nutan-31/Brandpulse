@@ -14,141 +14,141 @@ import {
 } from 'lucide-react'
 import { api } from '../api.js'
 
+
+/* =========================================================
+   GENERATING STATE
+   ========================================================= */
+
 function GeneratingAnimation({ elapsed }) {
   const stages = [
-    { time: 0, label: 'Preparing creative direction' },
-    { time: 5, label: 'Building cinematic composition' },
-    { time: 15, label: 'Generating video frames' },
-    { time: 30, label: 'Refining motion and detail' },
-    { time: 45, label: 'Finalising your Reel' },
+    {
+      time: 0,
+      label: 'Preparing creative direction',
+    },
+    {
+      time: 5,
+      label: 'Building cinematic composition',
+    },
+    {
+      time: 15,
+      label: 'Generating video frames',
+    },
+    {
+      time: 30,
+      label: 'Refining motion and detail',
+    },
+    {
+      time: 45,
+      label: 'Finalising your Reel',
+    },
   ]
 
   const currentStage =
-    [...stages].reverse().find((stage) => elapsed >= stage.time) || stages[0]
+    [...stages]
+      .reverse()
+      .find((stage) => elapsed >= stage.time) || stages[0]
 
   const progress = Math.min((elapsed / 60) * 100, 96)
 
   return (
-    <div
-      className="relative overflow-hidden rounded-[30px] min-h-[620px] flex items-center justify-center"
-      style={{
-        background:
-          'radial-gradient(circle at center, rgba(99,230,190,0.09), transparent 38%), var(--surface)',
-        border: '1px solid var(--border)',
-      }}
-    >
-      <div
-        className="absolute inset-0 opacity-30"
-        style={{
-          backgroundImage:
-            'linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)',
-          backgroundSize: '48px 48px',
-        }}
-      />
+    <div className="video-generating">
+      <div className="video-generating-orbit">
+        <div className="video-orbit-ring video-orbit-one" />
+        <div className="video-orbit-ring video-orbit-two" />
 
-      <div className="relative text-center px-8 max-w-md">
-        <div className="generation-orbit mx-auto">
-          <div className="generation-orbit-ring ring-one" />
-          <div className="generation-orbit-ring ring-two" />
-          <div className="generation-core">
-            <Sparkles size={26} />
-          </div>
+        <div className="video-generating-core">
+          <Sparkles size={24} />
+        </div>
+      </div>
+
+      <div className="eyebrow justify-center mt-8">
+        <span className="live-dot" />
+        AI VIDEO ENGINE
+      </div>
+
+      <h2 className="video-generating-title">
+        Your Reel is
+        <br />
+        <span>being created.</span>
+      </h2>
+
+      <p className="video-generating-description">
+        Your creative concept is being transformed into
+        a vertical social video.
+      </p>
+
+      <div className="video-progress-wrap">
+        <div className="video-progress-meta">
+          <span>
+            {currentStage.label.toUpperCase()}
+          </span>
+
+          <span>
+            {elapsed}s
+          </span>
         </div>
 
-        <div className="eyebrow justify-center mt-10">
-          <span className="live-dot" />
-          AI VIDEO ENGINE
-        </div>
-
-        <h2 className="font-display text-3xl md:text-4xl font-bold mt-4">
-          Your Reel is
-          <br />
-          <span className="text-accent">being created.</span>
-        </h2>
-
-        <p className="text-muted text-sm leading-relaxed mt-4">
-          Veo is transforming your creative concept into a vertical social
-          video. This usually takes a little while.
-        </p>
-
-        <div className="mt-8">
-          <div className="flex items-center justify-between mb-2">
-            <span className="font-mono text-[9px] text-muted">
-              {currentStage.label.toUpperCase()}
-            </span>
-            <span className="font-mono text-[9px] text-accent">
-              {elapsed}s
-            </span>
-          </div>
-
+        <div className="video-progress-track">
           <div
-            className="h-1 rounded-full overflow-hidden"
-            style={{ background: 'rgba(255,255,255,0.07)' }}
-          >
+            className="video-progress-fill"
+            style={{
+              width: `${progress}%`,
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="video-generation-stages">
+        {stages.slice(0, 3).map((stage, index) => {
+          const complete =
+            elapsed >= stage.time + 10
+
+          return (
             <div
-              className="h-full rounded-full transition-all duration-1000"
-              style={{
-                width: `${progress}%`,
-                background: 'var(--accent)',
-                boxShadow: '0 0 14px rgba(99,230,190,0.35)',
-              }}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-2 mt-8">
-          {stages.slice(0, 3).map((stage, index) => {
-            const complete = elapsed >= stage.time + 10
-
-            return (
-              <div
-                key={stage.label}
-                className="rounded-xl p-3 text-left"
-                style={{
-                  background: complete
-                    ? 'rgba(99,230,190,0.06)'
-                    : 'rgba(255,255,255,0.025)',
-                  border: complete
-                    ? '1px solid rgba(99,230,190,0.12)'
-                    : '1px solid rgba(255,255,255,0.05)',
-                }}
-              >
-                <div
-                  className="font-mono text-[8px]"
-                  style={{
-                    color: complete
-                      ? 'var(--accent)'
-                      : 'var(--text-dim)',
-                  }}
-                >
-                  {complete ? 'DONE' : `0${index + 1}`}
-                </div>
-
-                <div className="text-[9px] text-muted mt-2 leading-tight">
-                  {stage.label}
-                </div>
+              key={stage.label}
+              className={`video-generation-stage ${complete ? 'complete' : ''
+                }`}
+            >
+              <div className="video-stage-number">
+                {complete
+                  ? <Check size={10} />
+                  : `0${index + 1}`}
               </div>
-            )
-          })}
-        </div>
+
+              <span>
+                {stage.label}
+              </span>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
 }
 
+
+/* =========================================================
+   VIDEO PLAYER
+   ========================================================= */
+
 function VideoPlayer({ url }) {
   const videoRef = useRef(null)
+
   const [playing, setPlaying] = useState(false)
   const [muted, setMuted] = useState(true)
 
   async function togglePlay() {
     if (!videoRef.current) return
 
-    if (videoRef.current.paused) {
-      await videoRef.current.play()
-      setPlaying(true)
-    } else {
-      videoRef.current.pause()
+    try {
+      if (videoRef.current.paused) {
+        await videoRef.current.play()
+        setPlaying(true)
+      } else {
+        videoRef.current.pause()
+        setPlaying(false)
+      }
+    } catch {
       setPlaying(false)
     }
   }
@@ -156,88 +156,82 @@ function VideoPlayer({ url }) {
   function toggleMute() {
     if (!videoRef.current) return
 
-    videoRef.current.muted = !videoRef.current.muted
+    videoRef.current.muted =
+      !videoRef.current.muted
+
     setMuted(videoRef.current.muted)
   }
 
   return (
-    <div
-      className="relative rounded-[28px] overflow-hidden"
-      style={{
-        background: '#000',
-        border: '1px solid var(--border)',
-        boxShadow: '0 25px 80px rgba(0,0,0,0.35)',
-      }}
-    >
-      <video
-        ref={videoRef}
-        src={url}
-        playsInline
-        muted
-        className="w-full object-cover"
-        style={{
-          aspectRatio: '9 / 16',
-          maxHeight: '720px',
-          background: '#000',
-        }}
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-      />
+    <div className="video-player-shell">
+      <div className="video-player-label">
+        <span>REEL PREVIEW</span>
 
-      <div
-        className="absolute inset-x-0 bottom-0 p-5"
-        style={{
-          background:
-            'linear-gradient(transparent, rgba(0,0,0,0.85))',
-        }}
-      >
-        <div className="flex items-center justify-between">
+        <span className="video-format-badge">
+          9:16
+        </span>
+      </div>
+
+      <div className="video-player">
+        <video
+          ref={videoRef}
+          src={url}
+          playsInline
+          muted
+          className="video-element"
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+        />
+
+        <div className="video-player-gradient" />
+
+        <div className="video-player-controls">
           <button
             type="button"
             onClick={togglePlay}
-            className="w-10 h-10 rounded-full flex items-center justify-center"
-            style={{
-              background: 'rgba(255,255,255,0.12)',
-              backdropFilter: 'blur(8px)',
-            }}
+            className="video-control-button"
+            aria-label={
+              playing ? 'Pause video' : 'Play video'
+            }
           >
-            {playing ? <Pause size={16} /> : <Play size={16} />}
+            {playing
+              ? <Pause size={16} />
+              : <Play size={16} />}
           </button>
 
           <button
             type="button"
             onClick={toggleMute}
-            className="w-10 h-10 rounded-full flex items-center justify-center"
-            style={{
-              background: 'rgba(255,255,255,0.12)',
-              backdropFilter: 'blur(8px)',
-            }}
+            className="video-control-button"
+            aria-label={
+              muted ? 'Unmute video' : 'Mute video'
+            }
           >
-            {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+            {muted
+              ? <VolumeX size={16} />
+              : <Volume2 size={16} />}
           </button>
         </div>
-      </div>
-
-      <div
-        className="absolute top-4 left-4 px-3 py-1.5 rounded-full font-mono text-[8px]"
-        style={{
-          background: 'rgba(8,10,9,0.65)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          backdropFilter: 'blur(8px)',
-        }}
-      >
-        VEO 3 / 9:16
       </div>
     </div>
   )
 }
 
-function CopyButton({ text, label = 'COPY' }) {
+
+/* =========================================================
+   COPY BUTTON
+   ========================================================= */
+
+function CopyButton({
+  text,
+  label = 'COPY',
+}) {
   const [copied, setCopied] = useState(false)
 
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(text || '')
+
       setCopied(true)
 
       setTimeout(() => {
@@ -252,99 +246,82 @@ function CopyButton({ text, label = 'COPY' }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="flex items-center gap-2 font-mono text-[9px] transition"
-      style={{
-        color: copied ? 'var(--accent)' : 'var(--text-muted)',
-      }}
+      className="video-copy-button"
     >
-      {copied ? <Check size={12} /> : <Copy size={12} />}
+      {copied
+        ? <Check size={12} />
+        : <Copy size={12} />}
+
       {copied ? 'COPIED' : label}
     </button>
   )
 }
 
-function FailedState({ error, idea }) {
+
+/* =========================================================
+   FAILED STATE
+   ========================================================= */
+
+function FailedState({
+  error,
+  idea,
+}) {
   return (
     <div className="page-container pb-16">
-      <div
-        className="rounded-[28px] p-8 md:p-12"
-        style={{
-          background:
-            'linear-gradient(120deg, rgba(240,100,100,0.07), rgba(255,255,255,0.02))',
-          border: '1px solid rgba(240,100,100,0.18)',
-        }}
-      >
-        <div
-          className="w-12 h-12 rounded-full flex items-center justify-center mb-6"
-          style={{
-            background: 'rgba(240,100,100,0.1)',
-            color: 'var(--danger)',
-          }}
-        >
+      <section className="video-failed">
+        <div className="video-failed-icon">
           <RotateCcw size={19} />
         </div>
 
-        <div
-          className="font-mono text-[10px] tracking-[0.14em]"
-          style={{ color: 'var(--danger)' }}
-        >
+        <div className="video-failed-kicker">
           VIDEO GENERATION INTERRUPTED
         </div>
 
-        <h2 className="font-display text-3xl font-bold mt-3">
+        <h2 className="video-failed-title">
           The studio couldn't
           <br />
-          <span style={{ color: 'var(--danger)' }}>finish the render.</span>
+          <span>finish the render.</span>
         </h2>
 
-        <p className="text-muted text-sm mt-5 max-w-2xl leading-relaxed">
+        <p className="video-failed-description">
           {error ||
             'The video provider returned an error while generating this Reel.'}
         </p>
 
         {idea?.video_prompt && (
-          <div className="mt-8">
-            <div className="font-mono text-[9px] text-muted mb-3">
+          <div className="video-failed-prompt">
+            <div className="video-section-label">
               GENERATED VIDEO PROMPT
             </div>
 
-            <div
-              className="rounded-xl p-4 text-xs leading-relaxed"
-              style={{
-                background: 'rgba(0,0,0,0.2)',
-                border: '1px solid rgba(255,255,255,0.06)',
-                color: 'var(--text-muted)',
-              }}
-            >
+            <div className="video-prompt-box">
               {idea.video_prompt}
             </div>
           </div>
         )}
 
-        <div className="grid md:grid-cols-2 gap-4 mt-8">
+        <div className="video-provider-grid">
           <a
             href="https://fal.ai/dashboard"
             target="_blank"
             rel="noreferrer"
-            className="rounded-xl p-5 transition-all"
-            style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.07)',
-            }}
+            className="video-provider-card"
           >
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-[9px] text-muted">
+            <div className="video-provider-top">
+              <span>
                 VIDEO PROVIDER
               </span>
-              <ExternalLink size={13} className="text-muted" />
+
+              <ExternalLink size={13} />
             </div>
 
-            <div className="font-display text-lg font-bold mt-3">
+            <h3>
               Check fal.ai
-            </div>
+            </h3>
 
-            <p className="text-xs text-muted mt-2">
-              Verify credits, model availability and account status.
+            <p>
+              Verify credits, model availability
+              and account status.
             </p>
           </a>
 
@@ -352,32 +329,35 @@ function FailedState({ error, idea }) {
             href="https://replicate.com/account/api-tokens"
             target="_blank"
             rel="noreferrer"
-            className="rounded-xl p-5 transition-all"
-            style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.07)',
-            }}
+            className="video-provider-card"
           >
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-[9px] text-muted">
+            <div className="video-provider-top">
+              <span>
                 FALLBACK PROVIDER
               </span>
-              <ExternalLink size={13} className="text-muted" />
+
+              <ExternalLink size={13} />
             </div>
 
-            <div className="font-display text-lg font-bold mt-3">
+            <h3>
               Check Replicate
-            </div>
+            </h3>
 
-            <p className="text-xs text-muted mt-2">
-              Verify that the fallback API token is configured.
+            <p>
+              Verify that the fallback API
+              token is configured.
             </p>
           </a>
         </div>
-      </div>
+      </section>
     </div>
   )
 }
+
+
+/* =========================================================
+   MAIN VIDEO STUDIO
+   ========================================================= */
 
 export default function VideoStudio({
   jobId,
@@ -385,10 +365,22 @@ export default function VideoStudio({
   idea,
   onStartOver,
 }) {
-  const [status, setStatus] = useState('starting')
-  const [videoUrl, setVideoUrl] = useState(null)
-  const [error, setError] = useState(null)
-  const [elapsed, setElapsed] = useState(0)
+  const [status, setStatus] =
+    useState('starting')
+
+  const [videoUrl, setVideoUrl] =
+    useState(null)
+
+  const [error, setError] =
+    useState(null)
+
+  const [elapsed, setElapsed] =
+    useState(0)
+
+
+  /* -------------------------------------------------------
+     VIDEO STATUS POLLING
+     ------------------------------------------------------- */
 
   useEffect(() => {
     if (!jobId) return
@@ -398,7 +390,8 @@ export default function VideoStudio({
 
     async function checkStatus() {
       try {
-        const result = await api.getVideoStatus(jobId)
+        const result =
+          await api.getVideoStatus(jobId)
 
         if (cancelled) return
 
@@ -414,11 +407,13 @@ export default function VideoStudio({
           result.status === 'no_key'
         ) {
           setStatus('failed')
+
           setError(
             result.error ||
             result.message ||
             'The video generation service could not complete the request.'
           )
+
           return
         }
 
@@ -426,16 +421,21 @@ export default function VideoStudio({
       } catch (e) {
         if (!cancelled) {
           setStatus('failed')
-          setError(e.message || 'Unable to check video generation status.')
+
+          setError(
+            e.message ||
+            'Unable to check video generation status.'
+          )
         }
       }
     }
 
     checkStatus()
 
-    interval = setInterval(() => {
-      checkStatus()
-    }, 4000)
+    interval = setInterval(
+      checkStatus,
+      4000
+    )
 
     return () => {
       cancelled = true
@@ -443,8 +443,18 @@ export default function VideoStudio({
     }
   }, [jobId])
 
+
+  /* -------------------------------------------------------
+     GENERATION TIMER
+     ------------------------------------------------------- */
+
   useEffect(() => {
-    if (status !== 'starting' && status !== 'generating') return
+    if (
+      status !== 'starting' &&
+      status !== 'generating'
+    ) {
+      return
+    }
 
     const timer = setInterval(() => {
       setElapsed((value) => value + 1)
@@ -453,6 +463,11 @@ export default function VideoStudio({
     return () => clearInterval(timer)
   }, [status])
 
+
+  /* -------------------------------------------------------
+     CREATIVE DATA
+     ------------------------------------------------------- */
+
   const hashtags = useMemo(() => {
     const source =
       idea?.hashtags ||
@@ -460,8 +475,11 @@ export default function VideoStudio({
       brand?.hashtags ||
       []
 
-    return Array.isArray(source) ? source : []
+    return Array.isArray(source)
+      ? source
+      : []
   }, [idea, brand])
+
 
   const caption =
     idea?.caption ||
@@ -469,89 +487,136 @@ export default function VideoStudio({
     idea?.concept ||
     ''
 
+
   const title =
     idea?.title ||
     idea?.concept ||
     'AI Generated Reel'
 
-  const filename = `${(brand?.name || 'brandpulse')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')}-reel.mp4`
+
+  const filename =
+    `${(brand?.name || 'brandpulse')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')}-reel.mp4`
+
+
+  /* =======================================================
+     FAILED
+     ======================================================= */
 
   if (status === 'failed') {
-    return <FailedState error={error} idea={idea} />
+    return (
+      <FailedState
+        error={error}
+        idea={idea}
+      />
+    )
   }
 
-  if (!videoUrl || status === 'starting' || status === 'generating') {
+
+  /* =======================================================
+     GENERATING
+     ======================================================= */
+
+  if (
+    !videoUrl ||
+    status === 'starting' ||
+    status === 'generating'
+  ) {
     return (
       <div className="page-container pb-16">
-        <GeneratingAnimation elapsed={elapsed} />
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-6">
+        <section className="video-hero">
           <div>
-            <div className="font-mono text-[9px] text-muted">
+            <div className="ideas-kicker">
+              <Sparkles size={11} />
+              VIDEO STUDIO
+            </div>
+
+            <h1>
+              Your idea,
+              <br />
+              <span>now in motion.</span>
+            </h1>
+
+            <p>
+              We're turning your selected concept
+              into a ready-to-publish Reel.
+            </p>
+          </div>
+
+          <div className="video-generating-meta">
+            <span className="live-dot" />
+            GENERATING
+          </div>
+        </section>
+
+
+        <GeneratingAnimation
+          elapsed={elapsed}
+        />
+
+
+        <div className="video-current-concept">
+          <div>
+            <div className="video-section-label">
               CURRENT CONCEPT
             </div>
-            <div className="font-display text-lg font-bold mt-1">
+
+            <div className="video-current-title">
               {title}
             </div>
           </div>
 
-          <div className="font-mono text-[9px] text-dim">
+          <div className="video-job">
             JOB / {jobId || 'INITIALISING'}
           </div>
         </div>
+
       </div>
     )
   }
 
+
+  /* =======================================================
+     READY
+     ======================================================= */
+
   return (
     <div className="page-container pb-16">
-      <section
-        className="rounded-[26px] p-6 md:p-8 mb-8"
-        style={{
-          background:
-            'linear-gradient(120deg, rgba(99,230,190,0.07), rgba(255,255,255,0.02))',
-          border: '1px solid rgba(99,230,190,0.15)',
-        }}
-      >
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="flex items-start gap-4">
-            <div
-              className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
-              style={{
-                background: 'rgba(99,230,190,0.1)',
-                color: 'var(--accent)',
-              }}
-            >
-              <Check size={19} />
-            </div>
 
-            <div>
-              <div className="eyebrow text-accent">
-                <span className="live-dot" />
-                RENDER COMPLETE
-              </div>
+      {/* HERO */}
 
-              <h2 className="font-display text-2xl font-bold mt-2">
-                Your Reel is ready.
-              </h2>
+      <section className="video-hero video-hero-ready">
+        <div>
+          <div className="ideas-kicker">
+            <Check size={11} />
+            VIDEO STUDIO
+          </div>
 
-              <p className="text-muted text-sm mt-1">
-                Generated for {brand?.name || 'your brand'}.
-              </p>
-            </div>
+          <h1>
+            Your Reel
+            <br />
+            <span>is ready.</span>
+          </h1>
+
+          <p>
+            Your creative concept has been
+            turned into a finished vertical video.
+          </p>
+        </div>
+
+        <div className="video-ready-actions">
+          <div className="video-ready-status">
+            <span className="video-ready-dot" />
+            RENDER COMPLETE
           </div>
 
           <a
             href={api.downloadUrl(jobId)}
             download={filename}
-            className="btn btn-approve group"
-            style={{
-              padding: '13px 18px',
-              fontSize: '12px',
-            }}
+            className="video-download-button"
           >
             <Download size={15} />
             Download Reel
@@ -559,61 +624,86 @@ export default function VideoStudio({
         </div>
       </section>
 
-      <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-8 items-start">
-        <div>
-          <VideoPlayer url={videoUrl} />
+
+      {/* MAIN WORKSPACE */}
+
+      <div className="video-workspace">
+
+        {/* LEFT — VIDEO */}
+
+        <div className="video-preview-column">
+
+          <VideoPlayer
+            url={videoUrl}
+          />
+
+          <div className="video-preview-meta">
+            <div>
+              <span>FORMAT</span>
+              <strong>Vertical 9:16</strong>
+            </div>
+
+            <div>
+              <span>OUTPUT</span>
+              <strong>AI Generated Reel</strong>
+            </div>
+          </div>
+
         </div>
 
-        <div className="space-y-5">
-          <section
-            className="rounded-[24px] p-6 md:p-7"
-            style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <div className="eyebrow">
+
+        {/* RIGHT — CREATIVE OUTPUT */}
+
+        <div className="video-output-column">
+
+          <section className="video-output-card">
+
+            <div className="video-card-top">
+              <div className="video-section-label">
                 <Sparkles size={11} />
                 CREATIVE OUTPUT
               </div>
 
-              <span className="pill pill-accent">READY</span>
+              <span className="video-ready-pill">
+                READY
+              </span>
             </div>
 
-            <h3 className="font-display text-2xl font-bold mt-5">
+
+            <h2 className="video-output-title">
               {title}
-            </h3>
+            </h2>
+
 
             {caption && (
-              <div className="mt-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="font-mono text-[9px] text-muted">
+              <div className="video-content-block">
+
+                <div className="video-content-heading">
+                  <span>
                     CAPTION
-                  </div>
-                  <CopyButton text={caption} />
+                  </span>
+
+                  <CopyButton
+                    text={caption}
+                  />
                 </div>
 
-                <div
-                  className="rounded-xl p-4 text-sm leading-relaxed"
-                  style={{
-                    background: 'rgba(255,255,255,0.025)',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                    color: 'var(--text-soft)',
-                  }}
-                >
+                <div className="video-caption">
                   {caption}
                 </div>
+
               </div>
             )}
 
+
             {hashtags.length > 0 && (
-              <div className="mt-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2 font-mono text-[9px] text-muted">
+              <div className="video-content-block">
+
+                <div className="video-content-heading">
+                  <span className="video-heading-with-icon">
                     <Hash size={11} />
                     HASHTAGS
-                  </div>
+                  </span>
 
                   <CopyButton
                     text={hashtags.join(' ')}
@@ -621,82 +711,86 @@ export default function VideoStudio({
                   />
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {hashtags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="pill pill-muted"
-                      style={{
-                        color: 'var(--accent)',
-                      }}
-                    >
-                      {tag}
-                    </span>
-                  ))}
+                <div className="video-hashtags">
+                  {hashtags.map(
+                    (tag, index) => (
+                      <span
+                        key={`${tag}-${index}`}
+                      >
+                        {tag}
+                      </span>
+                    )
+                  )}
                 </div>
+
               </div>
             )}
+
           </section>
 
-          <section
-            className="rounded-[24px] p-6"
-            style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-            }}
-          >
-            <div className="eyebrow">
-              <Download size={11} />
-              PUBLISHING CHECKLIST
+
+          {/* QUICK PUBLISH */}
+
+          <section className="video-publish-card">
+
+            <div className="video-card-top">
+              <div className="video-section-label">
+                READY TO PUBLISH
+              </div>
             </div>
 
-            <div className="mt-5 space-y-3">
-              {[
-                'Download the 9:16 Reel',
-                'Review the generated caption',
-                'Add the suggested hashtags',
-                'Upload to Instagram Reels',
-              ].map((item, index) => (
-                <div
-                  key={item}
-                  className="flex items-center gap-3 py-3"
-                  style={{
-                    borderBottom:
-                      index < 3
-                        ? '1px solid rgba(255,255,255,0.05)'
-                        : 'none',
-                  }}
-                >
-                  <div
-                    className="w-6 h-6 rounded-full flex items-center justify-center"
-                    style={{
-                      background: 'rgba(99,230,190,0.08)',
-                      color: 'var(--accent)',
-                    }}
-                  >
-                    <Check size={12} />
-                  </div>
+            <div className="video-publish-list">
 
-                  <span className="text-xs text-muted">{item}</span>
-                </div>
-              ))}
+              <div>
+                <span className="video-check">
+                  <Check size={11} />
+                </span>
+
+                <span>
+                  Download your 9:16 Reel
+                </span>
+              </div>
+
+              <div>
+                <span className="video-check">
+                  <Check size={11} />
+                </span>
+
+                <span>
+                  Use the generated caption
+                </span>
+              </div>
+
+              <div>
+                <span className="video-check">
+                  <Check size={11} />
+                </span>
+
+                <span>
+                  Add your suggested hashtags
+                </span>
+              </div>
+
             </div>
+
           </section>
+
+
+          {/* START AGAIN */}
 
           <button
             type="button"
             onClick={onStartOver}
-            className="btn btn-ghost w-full justify-center"
-            style={{
-              padding: '13px 18px',
-              fontSize: '11px',
-            }}
+            className="video-start-over"
           >
             <RotateCcw size={13} />
-            START ANOTHER BRAND ANALYSIS
+            CREATE ANOTHER REEL
           </button>
+
         </div>
+
       </div>
+
     </div>
   )
 }

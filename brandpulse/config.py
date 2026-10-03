@@ -20,9 +20,9 @@ DATABRICKS_TOKEN         = os.environ.get("DATABRICKS_TOKEN", "")
 
 # ── Groq API ───────────────────────────────────────────────────────────────────
 GROQ_API_KEY    = os.environ.get("GROQ_API_KEY", "")
-GROQ_MODEL      = "llama-3.3-70b-versatile"
+GROQ_MODEL      = "openai/gpt-oss-120b"
 GROQ_API_BASE   = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MAX_TOKENS = 1000
+GROQ_MAX_TOKENS = 2500
 
 # ── fal.ai ─────────────────────────────────────────────────────────────────────
 FAL_API_KEY       = os.environ.get("FAL_API_KEY", "")

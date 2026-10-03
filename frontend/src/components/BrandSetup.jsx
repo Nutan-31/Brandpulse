@@ -1,23 +1,29 @@
 import { useState } from 'react'
 import {
   ArrowRight,
+  ArrowUpRight,
+  BarChart3,
+  BriefcaseBusiness,
   Check,
+  Hash,
+  Pencil,
   Plus,
   Sparkles,
   Target,
+  Users,
   X,
   Zap,
 } from 'lucide-react'
 
 const TONES = [
-  { value: 'Bold & Edgy', label: 'Bold & Edgy' },
-  { value: 'Luxury & Refined', label: 'Luxury & Refined' },
-  { value: 'Playful & Fun', label: 'Playful & Fun' },
-  { value: 'Educational', label: 'Educational' },
-  { value: 'Sustainable & Conscious', label: 'Sustainable' },
-  { value: 'Empowering', label: 'Empowering' },
-  { value: 'Minimalist & Clean', label: 'Minimalist' },
-  { value: 'Youthful & Gen-Z', label: 'Youthful / Gen-Z' },
+  'Bold & Edgy',
+  'Luxury & Refined',
+  'Playful & Fun',
+  'Educational',
+  'Sustainable & Conscious',
+  'Empowering',
+  'Minimalist & Clean',
+  'Youthful & Gen-Z',
 ]
 
 const INDUSTRIES = [
@@ -67,270 +73,116 @@ const INDUSTRY_PRESETS = {
   },
 }
 
-function TagInput({
+function MetricCard({
+  icon,
   label,
-  tags,
-  setTags,
-  placeholder,
+  value,
+  description,
+  tone,
 }) {
-  const [value, setValue] = useState('')
-
-  function addTag() {
-    const clean = value.trim()
-
-    if (!clean) return
-
-    if (!tags.includes(clean)) {
-      setTags([...tags, clean])
-    }
-
-    setValue('')
-  }
-
-  function removeTag(tag) {
-    setTags(tags.filter((item) => item !== tag))
-  }
-
-  function handleKeyDown(e) {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault()
-      addTag()
-    }
-  }
-
   return (
-    <div>
-      <label className="field-label">
+    <div className={`brand-overview-metric brand-overview-${tone}`}>
+
+      <div className="brand-overview-metric-top">
+        <div className="brand-overview-metric-icon">
+          {icon}
+        </div>
+
+        <ArrowUpRight size={14} />
+      </div>
+
+      <div className="brand-overview-metric-value">
+        {value}
+      </div>
+
+      <div className="brand-overview-metric-label">
+        {label}
+      </div>
+
+      <div className="brand-overview-metric-description">
+        {description}
+      </div>
+
+    </div>
+  )
+}
+
+function DashboardCard({
+  eyebrow,
+  title,
+  icon,
+  children,
+}) {
+  return (
+    <section className="brand-overview-card">
+
+      <div className="brand-overview-card-header">
+
+        <div>
+          <span>{eyebrow}</span>
+          <h2>{title}</h2>
+        </div>
+
+        {icon}
+
+      </div>
+
+      <div className="brand-overview-card-body">
+        {children}
+      </div>
+
+    </section>
+  )
+}
+
+function Tags({
+  items,
+  type = 'normal',
+}) {
+  return (
+    <div className={`brand-overview-tags ${type}`}>
+
+      {items.map((item) => (
+        <span key={item}>
+          {item}
+        </span>
+      ))}
+
+    </div>
+  )
+}
+
+function EditField({
+  label,
+  children,
+}) {
+  return (
+    <div className="brand-edit-field">
+
+      <label>
         {label}
       </label>
 
-      <div className="input-base min-h-[50px] flex flex-wrap items-center gap-2 px-3 py-2">
-
-        {tags.map((tag) => (
-          <span
-            key={tag}
-            className="pill pill-accent flex items-center gap-1.5"
-          >
-            {tag}
-
-            <button
-              type="button"
-              onClick={() => removeTag(tag)}
-              className="opacity-60 hover:opacity-100"
-            >
-              <X size={11} />
-            </button>
-          </span>
-        ))}
-
-        <input
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onBlur={addTag}
-          placeholder={tags.length ? 'Add another...' : placeholder}
-          className="flex-1 min-w-[120px] bg-transparent outline-none border-none"
-          style={{
-            color: 'var(--text)',
-            fontSize: '13px',
-          }}
-        />
-
-        <button
-          type="button"
-          onClick={addTag}
-          className="flex items-center justify-center w-7 h-7 rounded-full transition"
-          style={{
-            background: 'rgba(99,230,190,0.08)',
-            color: 'var(--accent)',
-          }}
-        >
-          <Plus size={14} />
-        </button>
-
-      </div>
-    </div>
-  )
-}
-
-function PreviewPanel({ form }) {
-  return (
-    <div className="relative hidden lg:block min-h-[650px]">
-
-      <div
-        className="absolute inset-0 rounded-[32px] overflow-hidden"
-        style={{
-          background: `
-            radial-gradient(
-              circle at 70% 25%,
-              rgba(99,230,190,0.13),
-              transparent 35%
-            ),
-            radial-gradient(
-              circle at 20% 80%,
-              rgba(155,140,255,0.08),
-              transparent 35%
-            ),
-            var(--surface)
-          `,
-          border: '1px solid var(--border)',
-        }}
-      >
-
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            backgroundImage:
-              'linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)',
-            backgroundSize: '48px 48px',
-          }}
-        />
-
-        <div className="absolute top-7 left-7 right-7 flex items-center justify-between">
-          <span className="eyebrow">
-            <span className="live-dot" />
-            BRAND INTELLIGENCE
-          </span>
-
-          <span className="font-mono text-[10px] text-muted">
-            01 / 04
-          </span>
-        </div>
-
-        <div className="absolute left-10 right-10 top-28">
-
-          <div className="font-mono text-[10px] tracking-[0.2em] text-muted mb-5">
-            LIVE BRAND PROFILE
-          </div>
-
-          <div
-            className="font-display text-5xl font-bold leading-[0.95] break-words"
-            style={{
-              color: form.name
-                ? 'var(--text)'
-                : 'rgba(244,245,242,0.18)',
-            }}
-          >
-            {form.name || 'YOUR BRAND'}
-          </div>
-
-          <div className="mt-5 flex flex-wrap gap-2">
-
-            <span className="pill pill-accent">
-              {form.industry || 'INDUSTRY'}
-            </span>
-
-            {form.tone && (
-              <span className="pill pill-muted">
-                {form.tone}
-              </span>
-            )}
-
-          </div>
-
-        </div>
-
-        <div
-          className="absolute left-10 right-10 bottom-36"
-        >
-
-          <div className="font-mono text-[10px] text-muted mb-3 tracking-[0.15em]">
-            AUDIENCE SIGNAL
-          </div>
-
-          <div
-            className="p-5 rounded-2xl"
-            style={{
-              background: 'rgba(255,255,255,0.035)',
-              border: '1px solid rgba(255,255,255,0.07)',
-            }}
-          >
-            <div className="flex items-start gap-3">
-
-              <div
-                className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-                style={{
-                  background: 'rgba(99,230,190,0.1)',
-                  color: 'var(--accent)',
-                }}
-              >
-                <Target size={16} />
-              </div>
-
-              <div className="min-w-0">
-                <div className="text-xs font-semibold text-white mb-1">
-                  Who are you trying to reach?
-                </div>
-
-                <div className="text-sm text-muted leading-relaxed">
-                  {form.audience ||
-                    'Your audience profile will appear here as you build your brand intelligence.'}
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-        </div>
-
-        <div className="absolute bottom-7 left-10 right-10 flex items-center justify-between">
-
-          <div className="flex items-center gap-2">
-            <Sparkles
-              size={13}
-              style={{ color: 'var(--accent)' }}
-            />
-
-            <span className="font-mono text-[10px] text-muted">
-              AI READY
-            </span>
-          </div>
-
-          <div className="font-mono text-[10px] text-dim">
-            APIFY + GROQ + VEO
-          </div>
-
-        </div>
-
-      </div>
-
-      <div
-        className="absolute -right-5 top-36 w-28 h-28 rounded-full"
-        style={{
-          border: '1px solid rgba(99,230,190,0.16)',
-          background: 'rgba(99,230,190,0.025)',
-        }}
-      />
-
-      <div
-        className="absolute -left-4 bottom-24 w-16 h-16 rounded-full"
-        style={{
-          background: 'rgba(99,230,190,0.06)',
-          border: '1px solid rgba(99,230,190,0.1)',
-        }}
-      />
+      {children}
 
     </div>
   )
 }
 
-export default function BrandSetup({ onComplete }) {
-  const [form, setForm] = useState({
-    name: '',
-    industry: 'Beauty & Skincare',
-    tone: '',
-    audience: '',
-    competitors: ['Mamaearth', 'Plum'],
-    hashtags: [
-      '#CleanBeauty',
-      '#SkincareRoutine',
-      '#NaturalGlow',
-    ],
-  })
+function EditModal({
+  form,
+  setForm,
+  error,
+  setError,
+  onClose,
+  onComplete,
+}) {
 
-  const [error, setError] = useState('')
+  const [tagValue, setTagValue] = useState('')
+  const [competitorValue, setCompetitorValue] =
+    useState('')
 
-  function updateField(field, value) {
+  function update(field, value) {
     setForm((prev) => ({
       ...prev,
       [field]: value,
@@ -339,12 +191,15 @@ export default function BrandSetup({ onComplete }) {
     setError('')
   }
 
-  function handleIndustryChange(industry) {
-    const preset = INDUSTRY_PRESETS[industry]
+  function changeIndustry(industry) {
+
+    const preset =
+      INDUSTRY_PRESETS[industry]
 
     setForm((prev) => ({
       ...prev,
       industry,
+
       ...(preset
         ? {
           hashtags: preset.hashtags,
@@ -354,7 +209,48 @@ export default function BrandSetup({ onComplete }) {
     }))
   }
 
-  function handleSubmit(e) {
+  function addHashtag() {
+
+    const value =
+      tagValue.trim()
+
+    if (!value) return
+
+    if (!form.hashtags.includes(value)) {
+      setForm((prev) => ({
+        ...prev,
+        hashtags: [
+          ...prev.hashtags,
+          value,
+        ],
+      }))
+    }
+
+    setTagValue('')
+  }
+
+  function addCompetitor() {
+
+    const value =
+      competitorValue.trim()
+
+    if (!value) return
+
+    if (!form.competitors.includes(value)) {
+      setForm((prev) => ({
+        ...prev,
+        competitors: [
+          ...prev.competitors,
+          value,
+        ],
+      }))
+    }
+
+    setCompetitorValue('')
+  }
+
+  function submit(e) {
+
     e.preventDefault()
 
     if (!form.name.trim()) {
@@ -363,7 +259,7 @@ export default function BrandSetup({ onComplete }) {
     }
 
     if (!form.tone) {
-      setError('Choose the tone that fits your brand.')
+      setError('Choose your brand personality.')
       return
     }
 
@@ -377,279 +273,795 @@ export default function BrandSetup({ onComplete }) {
       return
     }
 
-    setError('')
     onComplete(form)
+    onClose()
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="brand-edit-backdrop">
 
-      <div className="page-container py-8 md:py-12">
+      <div className="brand-edit-window">
 
-        <div className="flex items-center justify-between mb-12">
-
-          <div className="bp-logo">
-            <div className="bp-logo-mark">
-              <Zap size={14} strokeWidth={2.5} />
-            </div>
-
-            <div className="bp-logo-text">
-              Brand<span>Pulse</span>
-            </div>
-          </div>
-
-          <div className="hidden sm:flex items-center gap-2 font-mono text-[10px] text-muted">
-            <span className="live-dot" />
-            AI CREATIVE WORKSPACE
-          </div>
-
-        </div>
-
-        <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-10 xl:gap-16 items-start">
+        <div className="brand-edit-top">
 
           <div>
 
-            <div className="eyebrow mb-5">
-              <span className="text-accent">01</span>
-              BRAND FOUNDATION
+            <div className="brand-edit-kicker">
+              <Sparkles size={11} />
+              BRAND SETTINGS
             </div>
 
-            <h1 className="display-title max-w-2xl">
-              Build the intelligence
-              <br />
-              behind your <span className="text-accent">brand.</span>
-            </h1>
-
-            <p className="text-muted text-base md:text-lg max-w-xl mt-6 leading-relaxed">
-              Tell BrandPulse who you are. We'll turn your brand,
-              audience and market signals into content opportunities.
-            </p>
-
-            <form
-              onSubmit={handleSubmit}
-              className="mt-10 space-y-8"
-            >
-
-              <div>
-                <label className="field-label">
-                  Brand name
-                </label>
-
-                <input
-                  className="input-base text-base"
-                  placeholder="e.g. Aether Skin"
-                  value={form.name}
-                  onChange={(e) =>
-                    updateField('name', e.target.value)
-                  }
-                  autoFocus
-                />
-              </div>
-
-              <div>
-
-                <label className="field-label">
-                  What space are you in?
-                </label>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-
-                  {INDUSTRIES.map((industry) => {
-                    const active =
-                      form.industry === industry
-
-                    return (
-                      <button
-                        key={industry}
-                        type="button"
-                        onClick={() =>
-                          handleIndustryChange(industry)
-                        }
-                        className="text-left px-3 py-3 rounded-xl transition-all"
-                        style={{
-                          background: active
-                            ? 'rgba(99,230,190,0.09)'
-                            : 'rgba(255,255,255,0.025)',
-                          border: active
-                            ? '1px solid rgba(99,230,190,0.3)'
-                            : '1px solid rgba(255,255,255,0.07)',
-                          color: active
-                            ? 'var(--accent)'
-                            : 'var(--text-soft)',
-                          fontSize: '12px',
-                        }}
-                      >
-                        <span className="flex items-center gap-2">
-                          {active && (
-                            <Check size={12} />
-                          )}
-
-                          {industry}
-                        </span>
-                      </button>
-                    )
-                  })}
-
-                </div>
-
-              </div>
-
-              <div>
-
-                <label className="field-label">
-                  Brand personality
-                </label>
-
-                <div className="grid grid-cols-2 gap-2">
-
-                  {TONES.map((tone) => {
-                    const active =
-                      form.tone === tone.value
-
-                    return (
-                      <button
-                        key={tone.value}
-                        type="button"
-                        onClick={() =>
-                          updateField(
-                            'tone',
-                            tone.value
-                          )
-                        }
-                        className="px-3 py-3 rounded-xl text-left transition-all"
-                        style={{
-                          background: active
-                            ? 'rgba(99,230,190,0.09)'
-                            : 'rgba(255,255,255,0.025)',
-                          border: active
-                            ? '1px solid rgba(99,230,190,0.3)'
-                            : '1px solid rgba(255,255,255,0.07)',
-                          color: active
-                            ? 'var(--accent)'
-                            : 'var(--text-soft)',
-                          fontSize: '12px',
-                        }}
-                      >
-                        <span className="flex items-center justify-between gap-2">
-
-                          {tone.label}
-
-                          {active && (
-                            <Check size={13} />
-                          )}
-
-                        </span>
-                      </button>
-                    )
-                  })}
-
-                </div>
-
-              </div>
-
-              <div>
-
-                <label className="field-label">
-                  Who are you trying to reach?
-                </label>
-
-                <textarea
-                  className="input-base resize-none"
-                  rows={4}
-                  placeholder="Describe your ideal customer, their interests, age group, lifestyle, problems..."
-                  value={form.audience}
-                  onChange={(e) =>
-                    updateField(
-                      'audience',
-                      e.target.value
-                    )
-                  }
-                />
-
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-5">
-
-                <TagInput
-                  label="Target hashtags"
-                  tags={form.hashtags}
-                  setTags={(tags) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      hashtags: tags,
-                    }))
-                  }
-                  placeholder="#yourbrand"
-                />
-
-                <TagInput
-                  label="Competitors"
-                  tags={form.competitors}
-                  setTags={(competitors) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      competitors,
-                    }))
-                  }
-                  placeholder="Competitor name"
-                />
-
-              </div>
-
-              {error && (
-                <div
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl"
-                  style={{
-                    color: 'var(--danger)',
-                    background: 'rgba(240,100,100,0.06)',
-                    border:
-                      '1px solid rgba(240,100,100,0.15)',
-                    fontSize: '12px',
-                  }}
-                >
-                  <X size={14} />
-                  {error}
-                </div>
-              )}
-
-              <div className="pt-2 flex flex-col sm:flex-row sm:items-center gap-4">
-
-                <button
-                  type="submit"
-                  className="btn btn-approve group"
-                  style={{
-                    padding: '15px 22px',
-                    fontSize: '14px',
-                  }}
-                >
-                  <span>Start brand analysis</span>
-
-                  <ArrowRight
-                    size={17}
-                    className="transition-transform group-hover:translate-x-1"
-                  />
-                </button>
-
-                <div className="flex items-center gap-2 text-muted">
-                  <Sparkles size={13} />
-
-                  <span className="font-mono text-[10px]">
-                    LIVE TRENDS + AI CREATIVE
-                  </span>
-                </div>
-
-              </div>
-
-            </form>
+            <h2>
+              Edit brand profile
+            </h2>
 
           </div>
 
-          <PreviewPanel form={form} />
+          <button
+            type="button"
+            onClick={onClose}
+            className="brand-edit-close"
+          >
+            <X size={16} />
+          </button>
 
         </div>
+
+        <form onSubmit={submit}>
+
+          <div className="brand-edit-content">
+
+            <div className="brand-edit-row">
+
+              <EditField label="Brand name">
+
+                <input
+                  className="brand-edit-input"
+                  value={form.name}
+                  onChange={(e) =>
+                    update(
+                      'name',
+                      e.target.value
+                    )
+                  }
+                  placeholder="e.g. Aether Skin"
+                />
+
+              </EditField>
+
+              <EditField label="Industry">
+
+                <select
+                  className="brand-edit-input"
+                  value={form.industry}
+                  onChange={(e) =>
+                    changeIndustry(
+                      e.target.value
+                    )
+                  }
+                >
+
+                  {INDUSTRIES.map(
+                    (industry) => (
+                      <option
+                        key={industry}
+                        value={industry}
+                      >
+                        {industry}
+                      </option>
+                    )
+                  )}
+
+                </select>
+
+              </EditField>
+
+            </div>
+
+            <EditField label="Brand personality">
+
+              <div className="brand-edit-options">
+
+                {TONES.map((tone) => {
+
+                  const active =
+                    form.tone === tone
+
+                  return (
+                    <button
+                      type="button"
+                      key={tone}
+                      className={
+                        active
+                          ? 'active'
+                          : ''
+                      }
+                      onClick={() =>
+                        update(
+                          'tone',
+                          tone
+                        )
+                      }
+                    >
+
+                      {tone}
+
+                      {active && (
+                        <Check size={11} />
+                      )}
+
+                    </button>
+                  )
+                })}
+
+              </div>
+
+            </EditField>
+
+            <EditField label="Target audience">
+
+              <textarea
+                className="brand-edit-input brand-edit-textarea"
+                rows={4}
+                value={form.audience}
+                onChange={(e) =>
+                  update(
+                    'audience',
+                    e.target.value
+                  )
+                }
+                placeholder="Describe your ideal customer, their interests, age group, lifestyle and problems..."
+              />
+
+            </EditField>
+
+            <div className="brand-edit-row">
+
+              <EditField label="Target hashtags">
+
+                <div className="brand-edit-tags">
+
+                  {form.hashtags.map(
+                    (tag) => (
+                      <span key={tag}>
+                        {tag}
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setForm(
+                              (prev) => ({
+                                ...prev,
+                                hashtags:
+                                  prev.hashtags.filter(
+                                    (x) =>
+                                      x !== tag
+                                  ),
+                              })
+                            )
+                          }
+                        >
+                          <X size={9} />
+                        </button>
+                      </span>
+                    )
+                  )}
+
+                  <input
+                    value={tagValue}
+                    onChange={(e) =>
+                      setTagValue(
+                        e.target.value
+                      )
+                    }
+                    onKeyDown={(e) => {
+                      if (
+                        e.key === 'Enter' ||
+                        e.key === ','
+                      ) {
+                        e.preventDefault()
+                        addHashtag()
+                      }
+                    }}
+                    placeholder="Add hashtag"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={addHashtag}
+                    className="brand-edit-add"
+                  >
+                    <Plus size={12} />
+                  </button>
+
+                </div>
+
+              </EditField>
+
+              <EditField label="Competitors">
+
+                <div className="brand-edit-tags">
+
+                  {form.competitors.map(
+                    (item) => (
+                      <span key={item}>
+                        {item}
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setForm(
+                              (prev) => ({
+                                ...prev,
+                                competitors:
+                                  prev.competitors.filter(
+                                    (x) =>
+                                      x !== item
+                                  ),
+                              })
+                            )
+                          }
+                        >
+                          <X size={9} />
+                        </button>
+                      </span>
+                    )
+                  )}
+
+                  <input
+                    value={competitorValue}
+                    onChange={(e) =>
+                      setCompetitorValue(
+                        e.target.value
+                      )
+                    }
+                    onKeyDown={(e) => {
+                      if (
+                        e.key === 'Enter' ||
+                        e.key === ','
+                      ) {
+                        e.preventDefault()
+                        addCompetitor()
+                      }
+                    }}
+                    placeholder="Add competitor"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={addCompetitor}
+                    className="brand-edit-add"
+                  >
+                    <Plus size={12} />
+                  </button>
+
+                </div>
+
+              </EditField>
+
+            </div>
+
+            {error && (
+              <div className="brand-edit-error">
+                <X size={13} />
+                {error}
+              </div>
+            )}
+
+          </div>
+
+          <div className="brand-edit-footer">
+
+            <span>
+              <Sparkles size={12} />
+              Used by BrandPulse AI
+            </span>
+
+            <button
+              type="submit"
+              className="brand-edit-save"
+            >
+              Save changes
+              <ArrowRight size={14} />
+            </button>
+
+          </div>
+
+        </form>
 
       </div>
 
     </div>
   )
+}
+
+export default function BrandSetup({
+  brand,
+  onComplete,
+}) {
+
+  const [editing, setEditing] =
+    useState(!brand)
+
+  const [error, setError] =
+    useState('')
+
+  const [form, setForm] = useState({
+    name: brand?.name || '',
+    industry:
+      brand?.industry ||
+      'Beauty & Skincare',
+    tone: brand?.tone || '',
+    audience: brand?.audience || '',
+    competitors:
+      brand?.competitors ||
+      ['Mamaearth', 'Plum'],
+    hashtags:
+      brand?.hashtags ||
+      [
+        '#CleanBeauty',
+        '#SkincareRoutine',
+        '#NaturalGlow',
+      ],
+  })
+
+  function openEdit() {
+    setError('')
+
+    setForm({
+      name: brand?.name || form.name,
+      industry:
+        brand?.industry ||
+        form.industry ||
+        'Beauty & Skincare',
+      tone: brand?.tone || form.tone || '',
+      audience:
+        brand?.audience ||
+        form.audience ||
+        '',
+      competitors:
+        brand?.competitors ||
+        form.competitors,
+      hashtags:
+        brand?.hashtags ||
+        form.hashtags,
+    })
+
+    setEditing(true)
+  }
+
+  function handleComplete(updatedForm) {
+
+    setForm(updatedForm)
+
+    onComplete(updatedForm)
+  }
+
+  /* ========================================================
+     FIRST TIME
+     ======================================================== */
+
+  if (!brand) {
+
+    return (
+      <div className="brand-overview-page">
+
+        <div className="brand-empty-dashboard">
+
+          <div className="brand-empty-hero">
+
+            <div>
+
+              <div className="brand-overview-kicker">
+                <span className="live-dot" />
+                BRAND WORKSPACE
+              </div>
+
+              <h1>
+                Build the intelligence
+                <br />
+                behind your <span>brand.</span>
+              </h1>
+
+              <p>
+                Give BrandPulse a little context about
+                your brand. Everything else happens inside
+                your workspace.
+              </p>
+
+            </div>
+
+            <button
+              type="button"
+              className="brand-primary-action"
+              onClick={openEdit}
+            >
+              <Plus size={15} />
+              Configure brand
+            </button>
+
+          </div>
+
+          <div className="brand-empty-grid">
+
+            <div>
+              <Sparkles size={18} />
+              <strong>
+                AI creative intelligence
+              </strong>
+              <span>
+                Generate ideas that understand your brand.
+              </span>
+            </div>
+
+            <div>
+              <TrendingIcon />
+              <strong>
+                Live market signals
+              </strong>
+              <span>
+                Track the content your audience responds to.
+              </span>
+            </div>
+
+            <div>
+              <ClapperIcon />
+              <strong>
+                Video-ready concepts
+              </strong>
+              <span>
+                Turn winning ideas into production guides.
+              </span>
+            </div>
+
+          </div>
+
+        </div>
+
+        {editing && (
+          <EditModal
+            form={form}
+            setForm={setForm}
+            error={error}
+            setError={setError}
+            onClose={() => setEditing(false)}
+            onComplete={handleComplete}
+          />
+        )}
+
+      </div>
+    )
+  }
+
+  /* ========================================================
+     BRAND DASHBOARD
+     ======================================================== */
+
+  return (
+    <div className="brand-overview-page">
+
+      {/* HERO */}
+
+      <div className="brand-overview-hero">
+
+        <div className="brand-overview-hero-left">
+
+          <div className="brand-overview-avatar">
+            {brand.name?.charAt(0)?.toUpperCase()}
+          </div>
+
+          <div>
+
+            <div className="brand-overview-kicker">
+              <span className="live-dot" />
+              BRAND INTELLIGENCE
+            </div>
+
+            <h1>
+              {brand.name}
+            </h1>
+
+            <p>
+              {brand.industry}
+              <span>·</span>
+              {brand.tone}
+            </p>
+
+          </div>
+
+        </div>
+
+        <button
+          type="button"
+          className="brand-overview-edit"
+          onClick={openEdit}
+        >
+          <Pencil size={13} />
+          Edit brand
+        </button>
+
+      </div>
+
+      {/* METRICS */}
+
+      <div className="brand-overview-metrics">
+
+        <MetricCard
+          icon={<BriefcaseBusiness size={16} />}
+          label="Industry"
+          value={brand.industry}
+          description="Primary market"
+          tone="cyan"
+        />
+
+        <MetricCard
+          icon={<Users size={16} />}
+          label="Audience"
+          value="Defined"
+          description="Target profile available"
+          tone="purple"
+        />
+
+        <MetricCard
+          icon={<Sparkles size={16} />}
+          label="Brand voice"
+          value="Active"
+          description={brand.tone}
+          tone="green"
+        />
+
+        <MetricCard
+          icon={<Hash size={16} />}
+          label="Market signals"
+          value={brand.hashtags?.length || 0}
+          description="Tracked hashtags"
+          tone="coral"
+        />
+
+      </div>
+
+      {/* MAIN */}
+
+      <div className="brand-overview-main-grid">
+
+        <DashboardCard
+          eyebrow="BRAND PROFILE"
+          title="Your creative foundation"
+          icon={<BriefcaseBusiness size={16} />}
+        >
+
+          <div className="brand-profile-intro">
+
+            <div className="brand-profile-big-name">
+              {brand.name}
+            </div>
+
+            <p>
+              {brand.audience}
+            </p>
+
+          </div>
+
+          <div className="brand-profile-details">
+
+            <div>
+              <span>INDUSTRY</span>
+              <strong>
+                {brand.industry}
+              </strong>
+            </div>
+
+            <div>
+              <span>PERSONALITY</span>
+              <strong>
+                {brand.tone}
+              </strong>
+            </div>
+
+          </div>
+
+        </DashboardCard>
+
+        <DashboardCard
+          eyebrow="AUDIENCE"
+          title="Who you're creating for"
+          icon={<Users size={16} />}
+        >
+
+          <div className="brand-audience-content">
+
+            <div className="brand-audience-icon">
+              <Target size={20} />
+            </div>
+
+            <p>
+              {brand.audience}
+            </p>
+
+          </div>
+
+          <div className="brand-card-bottom">
+
+            <span>
+              TARGET PROFILE
+            </span>
+
+            <strong>
+              READY
+            </strong>
+
+          </div>
+
+        </DashboardCard>
+
+      </div>
+
+      {/* LOWER */}
+
+      <div className="brand-overview-main-grid">
+
+        <DashboardCard
+          eyebrow="CONTENT DIRECTION"
+          title="How your brand communicates"
+          icon={<Sparkles size={16} />}
+        >
+
+          <div className="brand-direction">
+
+            <div>
+              <span>01</span>
+              <div>
+                <strong>
+                  {brand.tone}
+                </strong>
+                <small>
+                  Primary brand personality
+                </small>
+              </div>
+              <Check size={14} />
+            </div>
+
+            <div>
+              <span>02</span>
+              <div>
+                <strong>
+                  Audience-first
+                </strong>
+                <small>
+                  Content built around your audience
+                </small>
+              </div>
+              <Check size={14} />
+            </div>
+
+            <div>
+              <span>03</span>
+              <div>
+                <strong>
+                  Trend-aware
+                </strong>
+                <small>
+                  Creative informed by live signals
+                </small>
+              </div>
+              <Check size={14} />
+            </div>
+
+          </div>
+
+        </DashboardCard>
+
+        <DashboardCard
+          eyebrow="MARKET SET"
+          title="Hashtags & competitors"
+          icon={<BarChart3 size={16} />}
+        >
+
+          <div className="brand-market-section">
+
+            <span>
+              TARGET HASHTAGS
+            </span>
+
+            <Tags
+              items={
+                brand.hashtags || []
+              }
+            />
+
+          </div>
+
+          <div className="brand-market-section">
+
+            <span>
+              COMPETITORS
+            </span>
+
+            <div className="brand-competitors">
+
+              {(brand.competitors || []).map(
+                (competitor) => (
+                  <div key={competitor}>
+
+                    <div className="brand-competitor-avatar">
+                      {competitor
+                        .charAt(0)
+                        .toUpperCase()}
+                    </div>
+
+                    <strong>
+                      {competitor}
+                    </strong>
+
+                    <ArrowUpRight size={12} />
+
+                  </div>
+                )
+              )}
+
+            </div>
+
+          </div>
+
+        </DashboardCard>
+
+      </div>
+
+      {/* BOTTOM CTA */}
+
+      <div className="brand-overview-ready">
+
+        <div>
+
+          <div className="brand-ready-icon">
+            <Zap size={15} />
+          </div>
+
+          <div>
+
+            <strong>
+              Your brand intelligence is ready.
+            </strong>
+
+            <span>
+              Explore live market signals to start creating.
+            </span>
+
+          </div>
+
+        </div>
+
+        <div className="brand-ready-status">
+          <span className="live-dot" />
+          AI READY
+        </div>
+
+      </div>
+
+      {editing && (
+        <EditModal
+          form={form}
+          setForm={setForm}
+          error={error}
+          setError={setError}
+          onClose={() => {
+            setEditing(false)
+            setError('')
+          }}
+          onComplete={handleComplete}
+        />
+      )}
+
+    </div>
+  )
+}
+
+/* Small visual icons */
+
+function TrendingIcon() {
+  return <BarChart3 size={18} />
+}
+
+function ClapperIcon() {
+  return <Zap size={18} />
 }

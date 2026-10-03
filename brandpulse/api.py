@@ -66,45 +66,179 @@ def get_brand():
 # ── Trend fetching ─────────────────────────────────────────────────────────────
 def _fetch_apify(hashtags: list[str]) -> list[dict]:
     try:
-        from apify_client import ApifyClient
+        import requests
+        import time
+
         if not APIFY_API_TOKEN or APIFY_API_TOKEN == "YOUR_APIFY_API_TOKEN":
             raise ValueError("No Apify token")
-        client = ApifyClient(APIFY_API_TOKEN)
-        bare   = [h.lstrip("#") for h in hashtags]
-        run    = client.actor(APIFY_ACTOR_ID).call(
-            run_input={
-                "hashtags": bare,
-                "resultsType": "posts",
-                "resultsLimit": APIFY_RESULTS_PER_HASHTAG,
-                "addParentData": False,
-            },
-            memory_mbytes=APIFY_MEMORY_MBYTES,
+
+        actor_id = APIFY_ACTOR_ID.replace("/", "~")
+
+        # Convert our hashtags into Instagram hashtag URLs.
+        direct_urls = [
+            f"https://www.instagram.com/explore/tags/{h.lstrip('#')}/"
+            for h in hashtags
+        ]
+
+        run_url = (
+            f"https://api.apify.com/v2/acts/"
+            f"{actor_id}/runs"
         )
+
+        run_input = {
+            "directUrls": direct_urls,
+            "resultsType": "posts",
+            "resultsLimit": APIFY_RESULTS_PER_HASHTAG,
+            "addParentData": False,
+        }
+
+        response = requests.post(
+            run_url,
+            params={"token": APIFY_API_TOKEN},
+            json=run_input,
+            timeout=60,
+        )
+
+        response.raise_for_status()
+
+        run_data = response.json()["data"]
+
+        run_id = run_data["id"]
+        dataset_id = run_data["defaultDatasetId"]
+
+        print(f"[Apify] started run: {run_id}")
+
+        # Wait for the Actor to finish.
+        status_url = (
+            f"https://api.apify.com/v2/actor-runs/"
+            f"{run_id}"
+        )
+
+        while True:
+            status_response = requests.get(
+                status_url,
+                params={"token": APIFY_API_TOKEN},
+                timeout=30,
+            )
+
+            status_response.raise_for_status()
+
+            status_data = status_response.json()["data"]
+            status = status_data.get("status")
+
+            if status in {
+                "SUCCEEDED",
+                "FAILED",
+                "ABORTED",
+                "TIMED-OUT",
+            }:
+                break
+
+            time.sleep(2)
+
+        print(f"[Apify] run finished: {status}")
+
+        if status != "SUCCEEDED":
+            raise RuntimeError(
+                f"Apify run ended with status: {status}"
+            )
+
+        # Retrieve the dataset.
+        dataset_url = (
+            f"https://api.apify.com/v2/datasets/"
+            f"{dataset_id}/items"
+        )
+
+        dataset_response = requests.get(
+            dataset_url,
+            params={
+                "token": APIFY_API_TOKEN,
+                "format": "json",
+            },
+            timeout=60,
+        )
+
+        dataset_response.raise_for_status()
+
+        raw_posts = dataset_response.json()
+
         posts = []
-        for raw in client.dataset(run["defaultDatasetId"]).iterate_items():
+
+        for raw in raw_posts:
             caption = (raw.get("caption") or "").strip()
+
             if not caption or len(caption) < 10:
                 continue
+
             raw_tags = raw.get("hashtags") or []
-            tags     = [f"#{t.lstrip('#')}" for t in raw_tags if t][:8]
+
+            tags = [
+                f"#{str(t).lstrip('#')}"
+                for t in raw_tags
+                if t
+            ][:8]
+
             if not tags:
-                tags = [f"#{m}" for m in re.findall(r'#(\w+)', caption)][:8]
-            likes    = int(raw.get("likesCount") or 0)
-            comments = int(raw.get("commentsCount") or 0)
+                tags = [
+                    f"#{m}"
+                    for m in re.findall(
+                        r"#(\w+)",
+                        caption
+                    )
+                ][:8]
+
+            likes = int(
+                raw.get("likesCount") or 0
+            )
+
+            comments = int(
+                raw.get("commentsCount") or 0
+            )
+
+            post_url = raw.get("url") or ""
+
+            if not post_url and raw.get("shortCode"):
+                post_url = (
+                    f"https://instagram.com/p/"
+                    f"{raw['shortCode']}"
+                )
+
             posts.append({
-                "post_id":    str(raw.get("id") or uuid.uuid4()),
-                "platform":   "Instagram",
-                "username":   raw.get("ownerUsername") or "unknown",
-                "caption":    caption[:300],
-                "hashtags":   tags,
-                "likes":      likes,
-                "comments":   comments,
-                "shares":     max(int(likes * 0.05), 0),
-                "timestamp":  raw.get("timestamp") or "",
-                "thumbnail":  raw.get("displayUrl") or raw.get("previewUrl") or "",
-                "post_url":   f"https://instagram.com/p/{raw.get('shortCode','')}" if raw.get("shortCode") else "",
+                "post_id": str(
+                    raw.get("id") or uuid.uuid4()
+                ),
+                "platform": "Instagram",
+                "username": (
+                    raw.get("ownerUsername")
+                    or "unknown"
+                ),
+                "caption": caption[:300],
+                "hashtags": tags,
+                "likes": likes,
+                "comments": comments,
+                "shares": max(
+                    int(likes * 0.05),
+                    0
+                ),
+                "timestamp": (
+                    raw.get("timestamp")
+                    or raw.get("takenAtIso")
+                    or ""
+                ),
+                "thumbnail": (
+                    raw.get("displayUrl")
+                    or raw.get("previewUrl")
+                    or ""
+                ),
+                "post_url": post_url,
             })
+
+        print(
+            f"[Apify] fetched {len(posts)} real posts"
+        )
+
         return posts
+
     except Exception as e:
         print(f"[Apify] failed: {e}")
         return []
@@ -458,25 +592,76 @@ def get_trends(brand: BrandConfig):
 def _call_groq(system_prompt: str) -> list[dict]:
     if not GROQ_API_KEY or GROQ_API_KEY == "YOUR_GROQ_API_KEY":
         raise ValueError("GROQ_API_KEY not set")
-    headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
+
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
     payload = {
         "model": GROQ_MODEL,
         "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user",   "content": "Generate now. Return ONLY the JSON array."},
+            {
+                "role": "system",
+                "content": system_prompt,
+            },
+            {
+                "role": "user",
+                "content": (
+                    "Generate the 3 ideas now. "
+                    "Return ONLY one complete valid JSON array. "
+                    "Do not use markdown. "
+                    "Do not add any text before or after the JSON."
+                ),
+            },
         ],
-        "max_tokens":  GROQ_MAX_TOKENS,
-        "temperature": 0.88,
+        "max_completion_tokens": GROQ_MAX_TOKENS,
+        "temperature": 0.7,
     }
-    resp = requests.post(GROQ_API_BASE, headers=headers, json=payload, timeout=30)
+
+    resp = requests.post(
+        GROQ_API_BASE,
+        headers=headers,
+        json=payload,
+        timeout=60,
+    )
+
     resp.raise_for_status()
-    content = resp.json()["choices"][0]["message"]["content"].strip()
+
+    data = resp.json()
+
+    content = (
+        data["choices"][0]["message"]["content"]
+        .strip()
+    )
+
+    # Remove accidental markdown fences.
     if content.startswith("```"):
-        content = content.split("```")[1]
-        if content.startswith("json"):
-            content = content[4:]
+        content = content.split("```", 2)[1]
+
+        if content.lstrip().startswith("json"):
+            content = content.lstrip()[4:]
+
         content = content.strip()
-    return json.loads(content)
+
+    # Find the JSON array if the model accidentally
+    # included a small amount of extra text.
+    start = content.find("[")
+    end = content.rfind("]")
+
+    if start == -1 or end == -1 or end <= start:
+        raise ValueError(
+            "Groq did not return a JSON array"
+        )
+
+    content = content[start:end + 1]
+
+    ideas = json.loads(content)
+
+    if not isinstance(ideas, list):
+        raise ValueError("Groq response is not a list")
+
+    return ideas
 
 def _mock_ideas(brand: BrandConfig) -> list[dict]:
     industry = brand.industry if brand and brand.industry else "Beauty & Skincare"
@@ -486,56 +671,217 @@ def _mock_ideas(brand: BrandConfig) -> list[dict]:
 
 @app.post("/api/generate")
 def generate_ideas(req: GenerateRequest):
-    brand  = req.brand
+    brand = req.brand
     trends = req.trends
 
     top_tags = trends.get("top_hashtags", [])
-    top_tag  = top_tags[0]["tag"]    if top_tags else (brand.hashtags[0] if brand.hashtags else "#Trending")
-    top_eng  = top_tags[0]["avg_engagement"] if top_tags else 0
-    rise_tag = top_tags[1]["tag"]    if len(top_tags) > 1 else (brand.hashtags[1] if len(brand.hashtags)>1 else top_tag)
-    gap_tag  = trends.get("gap_hashtag", top_tag)
-    comp_str = ", ".join(brand.competitors) if brand.competitors else "Competitors"
 
-    prompt = f"""You are the Creative Director for {brand.name} (Industry: {brand.industry}).
+    top_tag = (
+        top_tags[0]["tag"]
+        if top_tags
+        else (
+            brand.hashtags[0]
+            if brand.hashtags
+            else "#Trending"
+        )
+    )
+
+    top_eng = (
+        top_tags[0]["avg_engagement"]
+        if top_tags
+        else 0
+    )
+
+    rise_tag = (
+        top_tags[1]["tag"]
+        if len(top_tags) > 1
+        else (
+            brand.hashtags[1]
+            if len(brand.hashtags) > 1
+            else top_tag
+        )
+    )
+
+    gap_tag = trends.get(
+        "gap_hashtag",
+        top_tag
+    )
+
+    comp_str = (
+        ", ".join(brand.competitors)
+        if brand.competitors
+        else "Competitors"
+    )
+
+    prompt = f"""
+You are the Creative Director for {brand.name}.
+
+Industry: {brand.industry}
 Brand tone: {brand.tone}
 Target audience: {brand.audience}
 
-LIVE Instagram trend data right now:
-- Top trending hashtag: {top_tag} (avg {top_eng:,} engagements per post)
-- Rising hashtag: {rise_tag}
-- Competitor gap: {comp_str} are dominating {gap_tag} — {brand.name} has 0 posts there
-- Total posts analysed: {trends.get('total_posts', 0)}
+LIVE INSTAGRAM TREND DATA:
+Top hashtag: {top_tag}
+Average engagement: {top_eng}
+Rising hashtag: {rise_tag}
+Competitor gap: {comp_str} are dominating {gap_tag}
+Total posts analysed: {trends.get("total_posts", 0)}
 
-Generate exactly 3 Instagram Reel concepts as a JSON array.
-Each concept MUST be specifically tailored to the {brand.industry} industry, brand tone '{brand.tone}', and target audience.
+Create exactly 3 DIFFERENT Instagram Reel concepts.
 
-Rules:
-- caption: max 150 chars, punchy, fits brand tone and industry, no generic AI phrases, include 1-2 emojis
-- hashtags: array of exactly 3 hashtags, must include {top_tag}
-- image_prompt: rich visual direction for AI video generation — describe lighting, talent, colours, mood, props, camera angle, aspect ratio 9:16, motion style suitable for {brand.industry}
-- viral_score: integer 1-100 based on trend alignment
-- rationale: one sentence why this will perform based on the data above
+Every idea must be specifically relevant to:
+- {brand.name}
+- {brand.industry}
+- {brand.tone}
+- {brand.audience}
+- the current trend data above
 
-Return ONLY a valid JSON array. No markdown, no explanation.
+IMPORTANT:
+Return exactly 3 objects.
+Keep every field concise so the JSON is guaranteed to finish.
+
+Each object MUST contain:
+
+caption:
+Maximum 150 characters.
+Punchy.
+Include 1-2 emojis.
+
+hashtags:
+Exactly 3 hashtags.
+The first hashtag MUST be {top_tag}.
+
+image_prompt:
+Maximum 350 characters.
+Describe the Reel visually:
+lighting, talent, colours, props, camera angle,
+9:16 vertical format and motion.
+
+viral_score:
+Integer from 1 to 100 based ONLY on trend alignment.
+
+rationale:
+One short sentence explaining why the idea matches the current trends.
+
+Return ONLY valid JSON.
+No markdown.
+No code fences.
+No explanation.
+
+Example structure:
+
 [
-  {{"caption":"...","hashtags":["..."],"image_prompt":"...","viral_score":0,"rationale":"..."}},
-  ...
-]"""
+  {{
+    "caption": "short caption",
+    "hashtags": ["{top_tag}", "#example", "#example2"],
+    "image_prompt": "vertical 9:16 ...",
+    "viral_score": 85,
+    "rationale": "Matches the rising trend because ..."
+  }},
+  {{
+    "caption": "short caption",
+    "hashtags": ["{top_tag}", "#example", "#example2"],
+    "image_prompt": "vertical 9:16 ...",
+    "viral_score": 82,
+    "rationale": "Connects with ..."
+  }},
+  {{
+    "caption": "short caption",
+    "hashtags": ["{top_tag}", "#example", "#example2"],
+    "image_prompt": "vertical 9:16 ...",
+    "viral_score": 79,
+    "rationale": "Uses ..."
+  }}
+]
+"""
 
     try:
         ideas = _call_groq(prompt)
-        if not isinstance(ideas, list) or len(ideas) < 1:
-            raise ValueError("bad response")
-        # Validate + fill defaults
-        for idea in ideas:
-            if not isinstance(idea.get("hashtags"), list):
-                idea["hashtags"] = [top_tag]
-            idea["viral_score"] = int(idea.get("viral_score") or 80)
-        return {"ideas": ideas[:3], "source": "groq"}
-    except Exception as e:
-        print(f"[Groq] failed: {e} — using mock ideas")
-        return {"ideas": _mock_ideas(brand), "source": "mock"}
 
+        if not isinstance(ideas, list):
+            raise ValueError("Groq response is not a list")
+
+        if len(ideas) < 3:
+            raise ValueError(
+                f"Groq returned only {len(ideas)} ideas"
+            )
+
+        clean_ideas = []
+
+        for idea in ideas[:3]:
+
+            if not isinstance(idea, dict):
+                continue
+
+            idea["caption"] = str(
+                idea.get("caption") or ""
+            )[:150]
+
+            idea["image_prompt"] = str(
+                idea.get("image_prompt") or ""
+            )[:500]
+
+            idea["rationale"] = str(
+                idea.get("rationale") or ""
+            )
+
+            hashtags = idea.get("hashtags")
+
+            if not isinstance(hashtags, list):
+                hashtags = []
+
+            hashtags = [
+                str(tag)
+                for tag in hashtags
+                if tag
+            ][:3]
+
+            if top_tag not in hashtags:
+                hashtags.insert(0, top_tag)
+
+            idea["hashtags"] = hashtags[:3]
+
+            try:
+                idea["viral_score"] = max(
+                    1,
+                    min(
+                        100,
+                        int(
+                            idea.get(
+                                "viral_score",
+                                80
+                            )
+                        ),
+                    ),
+                )
+            except (TypeError, ValueError):
+                idea["viral_score"] = 80
+
+            clean_ideas.append(idea)
+
+        if len(clean_ideas) < 3:
+            raise ValueError(
+                "Could not validate 3 complete ideas"
+            )
+
+        print(
+            "[Groq] generated 3 AI ideas successfully"
+        )
+
+        return {
+            "ideas": clean_ideas,
+            "source": "groq",
+        }
+
+    except Exception as e:
+        print(
+            f"[Groq] failed: {e} — using mock ideas"
+        )
+
+        return {
+            "ideas": _mock_ideas(brand),
+            "source": "mock",
+        }
 # ── fal.ai video generation ────────────────────────────────────────────────────
 def _fal_headers():
     return {"Authorization": f"Key {FAL_API_KEY}", "Content-Type": "application/json"}
