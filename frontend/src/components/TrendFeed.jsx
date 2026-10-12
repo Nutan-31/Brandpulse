@@ -1,8 +1,8 @@
+
 import {
   TrendingUp,
   Users,
   Target,
-  AlertTriangle,
   ArrowRight,
   Heart,
   MessageCircle,
@@ -13,7 +13,9 @@ import {
 } from 'lucide-react'
 
 function formatNumber(value) {
-  const num = Number(value || 0)
+  const num = Number(value ?? 0)
+
+  if (!Number.isFinite(num)) return '0'
 
   if (num >= 1000000) {
     return `${(num / 1000000).toFixed(1)}M`
@@ -53,7 +55,7 @@ function MetricCard({
         className="trends-overview-metric-value"
         style={{ color: accent }}
       >
-        {formatNumber(value)}
+        {value == null ? '—' : formatNumber(value)}
       </div>
 
       <div className="trends-overview-metric-description">
@@ -68,63 +70,115 @@ function TrendCard({
   engagement,
   count,
   index,
+  maxEngagement,
 }) {
+  const value = Number(engagement ?? 0)
+  const safeValue = Number.isFinite(value) ? value : 0
+  const maximum = Math.max(Number(maxEngagement ?? 0), 1)
+  const width = Math.min((safeValue / maximum) * 100, 100)
+
   return (
     <div className="trends-topic-card">
-
       <div className="trends-topic-number">
         {String(index + 1).padStart(2, '0')}
       </div>
 
       <div className="trends-topic-main">
-
         <div className="trends-topic-top">
           <span className="trends-topic-name">
-            {tag}
+            {tag || 'Unnamed topic'}
           </span>
 
           <span className="trends-topic-value">
-            {formatNumber(engagement)}
+            {formatNumber(safeValue)}
           </span>
         </div>
 
         <div className="trends-topic-track">
           <div
             className="trends-topic-fill"
-            style={{
-              width: `${Math.min(
-                Number(engagement || 0) /
-                Math.max(Number(engagement || 1), 1) *
-                100,
-                100
-              )}%`,
-            }}
+            style={{ width: `${width}%` }}
           />
         </div>
 
         <div className="trends-topic-meta">
           <span>Avg. engagement</span>
-          <span>{count} posts</span>
+          <span>
+            {count == null ? '—' : formatNumber(count)} posts
+          </span>
         </div>
-
       </div>
-
     </div>
   )
 }
 
+/*
+ * A post is clickable only when it has a real Instagram URL
+ * and is not marked as demo content.
+ *
+ * Posts without URLs can still be displayed, but they
+ * will not pretend to be clickable Instagram posts.
+ */
+function isRealInstagramPost(post) {
+  return Boolean(
+    post &&
+    typeof post.post_url === 'string' &&
+    post.post_url.startsWith('https://www.instagram.com/') &&
+    !post.is_demo
+  )
+}
+
 function PostCard({ post }) {
+  const isRealPost = isRealInstagramPost(post)
+
+  const openInstagramPost = () => {
+    if (!isRealPost) return
+
+    window.open(
+      post.post_url,
+      '_blank',
+      'noopener,noreferrer'
+    )
+  }
+
+  const handleKeyDown = (event) => {
+    if (!isRealPost) return
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      openInstagramPost()
+    }
+  }
+
   return (
-    <div className="trends-content-card">
-
+    <div
+      className={`trends-content-card ${isRealPost
+        ? 'trends-content-card-clickable'
+        : 'trends-content-card-unlinked'
+        }`}
+      onClick={isRealPost ? openInstagramPost : undefined}
+      onKeyDown={isRealPost ? handleKeyDown : undefined}
+      role={isRealPost ? 'link' : undefined}
+      tabIndex={isRealPost ? 0 : undefined}
+      title={
+        isRealPost
+          ? 'Open this post on Instagram'
+          : 'Instagram post data'
+      }
+    >
+      {/* POST IMAGE */}
       <div className="trends-content-image">
-
         {post.thumbnail ? (
           <img
             src={post.thumbnail}
-            alt=""
-            onError={(e) => {
-              e.currentTarget.style.display = 'none'
+            alt={
+              post.username
+                ? `Instagram post by @${post.username}`
+                : 'Instagram post'
+            }
+            loading="lazy"
+            onError={(event) => {
+              event.currentTarget.style.display = 'none'
             }}
           />
         ) : (
@@ -134,29 +188,42 @@ function PostCard({ post }) {
         )}
 
         <div className="trends-content-badge">
-          LIVE POST
+          {isRealPost ? 'LIVE DATA' : 'POST DATA'}
         </div>
-
       </div>
 
+      {/* POST DETAILS */}
       <div className="trends-content-body">
+        {post.username && (
+          <div
+            style={{
+              fontSize: '12px',
+              fontWeight: 600,
+              marginBottom: '8px',
+              opacity: 0.7,
+            }}
+          >
+            @{post.username}
+          </div>
+        )}
 
         <p>
           {post.caption || 'No caption available'}
         </p>
 
+        {/* HASHTAGS */}
         <div className="trends-content-tags">
-          {(post.hashtags || [])
+          {(Array.isArray(post.hashtags) ? post.hashtags : [])
             .slice(0, 3)
-            .map((tag) => (
-              <span key={tag}>
-                {tag}
+            .map((tag, index) => (
+              <span key={`${tag}-${index}`}>
+                {tag.startsWith('#') ? tag : `#${tag}`}
               </span>
             ))}
         </div>
 
+        {/* ENGAGEMENT METRICS */}
         <div className="trends-content-footer">
-
           <span>
             <Heart size={12} />
             {formatNumber(post.likes)}
@@ -167,21 +234,21 @@ function PostCard({ post }) {
             {formatNumber(post.comments)}
           </span>
 
-          {post.post_url && (
+          {isRealPost && (
             <a
               href={post.post_url}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
+              onClick={(event) => {
+                event.stopPropagation()
+              }}
             >
-              View
+              View on Instagram
               <ExternalLink size={11} />
             </a>
           )}
-
         </div>
-
       </div>
-
     </div>
   )
 }
@@ -194,21 +261,42 @@ export default function TrendFeed({
 }) {
   if (!trends) return null
 
-  const topTags = trends.top_hashtags || []
+  const topTags = Array.isArray(trends.top_hashtags)
+    ? trends.top_hashtags
+    : []
 
-  const posts = (trends.posts || []).filter(
-    (post) => post.caption
+  const visibleTopTags = topTags.slice(0, 6)
+
+  const maxEngagement = Math.max(
+    ...visibleTopTags.map((item) =>
+      Number(item.avg_engagement ?? 0)
+    ),
+    0
   )
+
+  const posts = (
+    Array.isArray(trends.posts) ? trends.posts : []
+  ).filter(
+    (post) =>
+      post &&
+      !post.is_demo &&
+      (
+        post.caption ||
+        post.post_url ||
+        post.username ||
+        post.thumbnail
+      )
+  )
+
+  const hasOpportunity =
+    trends.opportunity_status === 'evidence_found' &&
+    Boolean(trends.gap_hashtag)
 
   return (
     <div className="trends-page">
-
       {/* HERO */}
-
       <section className="trends-hero">
-
         <div>
-
           <div className="trends-kicker">
             <span />
             TREND DISCOVERY
@@ -223,11 +311,9 @@ export default function TrendFeed({
             Discover the conversations, content and
             audience signals shaping your market right now.
           </p>
-
         </div>
 
         <div className="trends-live-card">
-
           <div className="trends-live-icon">
             <Activity size={17} />
           </div>
@@ -238,21 +324,16 @@ export default function TrendFeed({
           </div>
 
           <div className="trends-live-dot" />
-
         </div>
-
       </section>
 
-
       {/* METRICS */}
-
       <section className="trends-metrics">
-
         <MetricCard
           icon={BarChart2}
           label="Posts analysed"
           value={trends.total_posts}
-          description="Market activity"
+          description="Relevant market activity"
           accent="var(--accent)"
         />
 
@@ -260,7 +341,7 @@ export default function TrendFeed({
           icon={Target}
           label="Competitor posts"
           value={trends.competitor_count}
-          description="Competitive activity"
+          description="Detected competitive activity"
           accent="var(--coral)"
         />
 
@@ -268,7 +349,7 @@ export default function TrendFeed({
           icon={Users}
           label="Your posts"
           value={trends.brand_post_count}
-          description="Current presence"
+          description="Your own posts identified"
           accent="var(--purple)"
         />
 
@@ -276,25 +357,17 @@ export default function TrendFeed({
           icon={TrendingUp}
           label="Trend signals"
           value={topTags.length}
-          description="Active conversations"
+          description="Detected hashtag signals"
           accent="var(--green)"
         />
-
       </section>
 
-
       {/* MAIN DASHBOARD */}
-
       <section className="trends-dashboard-grid">
-
-        {/* TREND TOPICS */}
-
+        {/* TRENDING TOPICS */}
         <div className="trends-dashboard-card">
-
           <div className="trends-dashboard-header">
-
             <div>
-
               <div className="trends-card-kicker">
                 <TrendingUp size={12} />
                 TRENDING TOPICS
@@ -305,61 +378,46 @@ export default function TrendFeed({
               </h2>
 
               <p>
-                The strongest conversations detected
-                in your market.
+                The strongest hashtag signals found in
+                the relevant posts analysed for your brand.
               </p>
-
             </div>
 
             <div className="trends-count-pill">
               {topTags.length} signals
             </div>
-
           </div>
 
           <div className="trends-topic-list">
-
-            {topTags
-              .slice(0, 6)
-              .map(
-                (
-                  {
-                    tag,
-                    avg_engagement,
-                    count,
-                  },
-                  index
-                ) => (
-                  <TrendCard
-                    key={tag}
-                    tag={tag}
-                    engagement={avg_engagement}
-                    count={count}
-                    index={index}
-                  />
-                )
-              )}
+            {visibleTopTags.map((item, index) => (
+              <TrendCard
+                key={item.tag || item.hashtag || index}
+                tag={item.tag || item.hashtag}
+                engagement={item.avg_engagement}
+                count={item.count}
+                index={index}
+                maxEngagement={maxEngagement}
+              />
+            ))}
 
             {topTags.length === 0 && (
               <div className="trends-empty">
                 <Sparkles size={22} />
-                No trend data available yet.
+
+                <p>
+                  {trends.apify_error
+                    ? 'Trend topics could not be calculated from the available data.'
+                    : 'No trend data available yet. Try analysing your brand again.'}
+                </p>
               </div>
             )}
-
           </div>
-
         </div>
 
-
-        {/* OPPORTUNITY */}
-
+        {/* CONTENT OPPORTUNITY */}
         <div className="trends-dashboard-card trends-opportunity-card">
-
           <div className="trends-dashboard-header">
-
             <div>
-
               <div className="trends-card-kicker">
                 <Target size={12} />
                 OPPORTUNITY
@@ -370,25 +428,21 @@ export default function TrendFeed({
               </h2>
 
               <p>
-                A signal where competitor activity
-                is currently stronger.
+                Potential content opportunities supported
+                by the available Instagram signals.
               </p>
-
             </div>
-
           </div>
 
-          {trends.gap_hashtag ? (
+          {hasOpportunity ? (
             <div className="trends-opportunity-inner">
-
               <div className="trends-opportunity-icon">
-                <AlertTriangle size={19} />
+                <Target size={19} />
               </div>
 
               <div>
-
                 <span>
-                  COMPETITOR GAP
+                  CONTENT OPPORTUNITY
                 </span>
 
                 <h3>
@@ -396,24 +450,23 @@ export default function TrendFeed({
                 </h3>
 
                 <p>
-                  Around{' '}
+                  Observed average engagement:{' '}
                   <strong>
-                    {formatNumber(
-                      trends.gap_engagement
-                    )}
-                  </strong>{' '}
-                  average engagement is being generated
-                  around this signal.
+                    {formatNumber(trends.gap_engagement)}
+                  </strong>
+                  . This signal appeared in multiple relevant
+                  posts. It may be worth exploring in your
+                  next content campaign.
                 </p>
-
               </div>
-
             </div>
           ) : (
             <div className="trends-opportunity-empty">
               <Sparkles size={20} />
+
               <p>
-                No major content gap detected.
+                {trends.opportunity_message ||
+                  'Not enough relevant post data to establish a content opportunity yet.'}
               </p>
             </div>
           )}
@@ -425,20 +478,13 @@ export default function TrendFeed({
 
             <ArrowRight size={15} />
           </div>
-
         </div>
-
       </section>
 
-
       {/* RECENT CONTENT */}
-
       <section className="trends-content-section">
-
         <div className="trends-section-heading">
-
           <div>
-
             <div className="trends-card-kicker">
               <MessageCircle size={12} />
               RECENT CONTENT
@@ -447,50 +493,47 @@ export default function TrendFeed({
             <h2>
               Content your market is engaging with.
             </h2>
-
           </div>
 
           <span>
-            LIVE FEED
+            INSTAGRAM FEED
           </span>
-
         </div>
 
         <div className="trends-content-grid">
-
-          {posts
-            .slice(0, 4)
-            .map((post) => (
-              <PostCard
-                key={post.post_id}
-                post={post}
-              />
-            ))}
+          {posts.slice(0, 4).map((post, index) => (
+            <PostCard
+              key={
+                post.id ||
+                post.post_id ||
+                post.post_url ||
+                `${post.username || 'post'}-${index}`
+              }
+              post={post}
+            />
+          ))}
 
           {posts.length === 0 && (
             <div className="trends-content-empty">
               <Sparkles size={22} />
-              Fetching real posts...
+
+              <p>
+                {trends.apify_error ||
+                  'No relevant Instagram posts are available to display. Check your target hashtags and brand description, then try again.'}
+              </p>
             </div>
           )}
-
         </div>
-
       </section>
 
-
       {/* AI ACTION */}
-
       <section className="trends-action-card">
-
         <div className="trends-action-left">
-
           <div className="trends-action-icon">
             <Sparkles size={19} />
           </div>
 
           <div>
-
             <div className="trends-card-kicker">
               AI CREATIVE ENGINE
             </div>
@@ -501,13 +544,11 @@ export default function TrendFeed({
             </h2>
 
             <p>
-              Use everything BrandPulse discovered to
-              generate targeted Reel concepts for{' '}
-              <strong>{brand.name}</strong>.
+              Use the available trend signals and brand context
+              to generate targeted Reel concepts for{' '}
+              <strong>{brand?.name || 'your brand'}</strong>.
             </p>
-
           </div>
-
         </div>
 
         <button
@@ -530,9 +571,7 @@ export default function TrendFeed({
             </>
           )}
         </button>
-
       </section>
-
     </div>
   )
 }

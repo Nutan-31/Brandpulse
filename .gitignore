@@ -16,6 +16,7 @@ venv/
 
 # Runtime artifacts
 brandpulse/brand_config.json
+brandpulse/latest_trends.json
 brandpulse/videos/
 
 # Node / frontend
